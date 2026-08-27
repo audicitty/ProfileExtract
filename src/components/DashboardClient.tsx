@@ -158,13 +158,23 @@ export function DashboardClient() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
       {/* Header & Instructions */}
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Profile Extraction Workspace
-        </h1>
-        <p className="text-sm text-slate-600">
-          Extract, normalize, and export LinkedIn profile data into clean structured tables and CSV.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Profile Extraction Workspace
+          </h1>
+          <p className="text-sm text-slate-600">
+            Extract, normalize, and export LinkedIn profile data into clean structured tables and CSV.
+          </p>
+        </div>
+
+        <a
+          href="/url-extract"
+          className="inline-flex items-center gap-1.5 self-start rounded-lg bg-blue-50 border border-blue-200 px-3.5 py-2 text-xs font-semibold text-[#0f4c81] shadow-xs transition hover:bg-blue-100/70"
+        >
+          <span>Extract directly via URL</span>
+          <span className="text-slate-400">&rarr;</span>
+        </a>
       </div>
 
       {/* Input Section Card */}
