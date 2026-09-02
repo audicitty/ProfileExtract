@@ -47,10 +47,18 @@ export function Navbar() {
               </Link>
               <Link
                 href="/url-extract"
-                className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-[#0f4c81] hover:text-[#0a365c] transition"
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
               >
                 <span>URL Extractor</span>
-                <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-bold text-[#0f4c81]">NEW</span>
+              </Link>
+              <Link
+                href="/jobs"
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-[#0f4c81] hover:text-[#0a365c] transition"
+              >
+                <span>Job Matcher</span>
+                <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800">
+                  AI
+                </span>
               </Link>
               <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700">
                 <UserIcon className="h-3.5 w-3.5 text-slate-500" />
