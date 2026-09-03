@@ -158,3 +158,14 @@ npm run db:push
 # 5. Run linter
 npm run lint
 ```
+
+---
+
+## 7. Known Issues / Tech Debt (Fix Later — Not Yet Actioned)
+
+> Logged here for tracking only. Do not fix any of these until explicitly asked.
+
+1. **Hardcoded Bright Data credentials committed to source.** [src/lib/brightdata.ts:280](src/lib/brightdata.ts#L280) — `extractProfileFromUrl` falls back to a literal API key (`f3fc32db-47d8-4117-81d7-b224ec63f965`) and dataset ID (`gd_l1viktl72bvl7bjuj0`) whenever `BRIGHTDATA_API_KEY` / `BRIGHTDATA_DATASET_ID` aren't set in the environment. `.env*` is gitignored, but this bypasses that entirely — the credential has been in the tracked file (and git history) since commit `2838457`. Fix: remove the fallback and throw if the env var is missing (same pattern already used for the Gemini key), and rotate the exposed key at Bright Data.
+2. **Dead code left over from the Text Extractor removal.** Commit `7a57d3a` removed the Text Extractor feature from the UI/nav (dashboard now just redirects) but didn't delete its backend: `src/components/DashboardClient.tsx`, `src/app/api/extract/route.ts`, and `extractProfileData()` in `src/lib/gemini.ts` are unreferenced by any route. Fix: delete them, or restore the feature intentionally if it's coming back.
+3. **This file is stale on the Text Extractor.** §1 and §3 above still document `/dashboard`, `DashboardClient.tsx`, and text extraction as a live capability — it isn't (see #2). Update once #2 is resolved.
+4. **Frontend visual redesign planned.** See `FRONTEND_IMPROVEMENTS.md` (audit) and `REDESIGN_PROMPTS.md` (prompt sequence) at the repo root — appearance-only overhaul toward a 3D/glassmorphism aesthetic, to be executed prompt-by-prompt on request, without touching functionality.

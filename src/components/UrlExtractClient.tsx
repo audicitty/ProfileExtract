@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { ProfileData } from "@/lib/types";
 import { ProfileResults } from "./ProfileResults";
 import {
@@ -9,15 +10,18 @@ import {
   Sparkles,
   AlertCircle,
   ArrowRight,
-  RotateCcw,
   CheckCircle2,
-  ExternalLink,
   ShieldCheck,
   Zap,
-  FileSpreadsheet,
 } from "lucide-react";
 
 const SAMPLE_URL = "https://www.linkedin.com/in/satyanadella";
+
+const PROGRESS_STEPS = [
+  { threshold: 1, label: "Trigger Bright Data API" },
+  { threshold: 2, label: "Scrape Live Profile" },
+  { threshold: 3, label: "Format Tables & CSV" },
+] as const;
 
 export function UrlExtractClient() {
   const [url, setUrl] = useState("");
@@ -25,6 +29,11 @@ export function UrlExtractClient() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [progressStep, setProgressStep] = useState<number>(0);
+  const reduceMotion = useReducedMotion();
+
+  const clampedStep = Math.min(progressStep, PROGRESS_STEPS.length);
+  const railFillPercent =
+    clampedStep <= 1 ? 0 : ((clampedStep - 1) / (PROGRESS_STEPS.length - 1)) * 100;
 
   const handleLoadSample = () => {
     setUrl(SAMPLE_URL);
@@ -38,7 +47,7 @@ export function UrlExtractClient() {
     setProgressStep(0);
   };
 
-  const handleExtract = async (e: React.FormEvent) => {
+  const handleExtract = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setProfile(null);
@@ -95,7 +104,10 @@ export function UrlExtractClient() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-6">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-[#0f4c81] text-white shadow-sm">
+            <span
+              className="gradient-brand inline-flex h-9 w-9 items-center justify-center rounded-lg text-white"
+              style={{ boxShadow: "var(--shadow-surface-1)" }}
+            >
               <Globe className="h-5 w-5" />
             </span>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -118,13 +130,16 @@ export function UrlExtractClient() {
       </div>
 
       {/* URL Input Workspace Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div
+        className="rounded-xl border border-slate-200 bg-white p-6"
+        style={{ boxShadow: "var(--shadow-surface-2)" }}
+      >
         {/* Help Banner */}
-        <div className="mb-5 flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/70 p-3.5 text-xs text-blue-900">
-          <Zap className="h-4 w-4 shrink-0 text-[#0f4c81] mt-0.5" />
+        <div className="glass mb-5 flex items-start gap-3 rounded-lg p-3.5 text-xs text-slate-700">
+          <Zap className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--color-primary)" }} />
           <div className="leading-relaxed">
             <strong>Powered by Bright Data Web Scraper API:</strong> Provide any public LinkedIn profile URL (e.g.{" "}
-            <code className="rounded bg-blue-100/70 px-1 py-0.5 font-mono text-[11px]">
+            <code className="rounded bg-white/60 px-1 py-0.5 font-mono text-[11px]">
               https://www.linkedin.com/in/username
             </code>
             ). The scraper will retrieve live profile attributes, normalize them into structured tables, and make them ready for CSV export.
@@ -172,7 +187,7 @@ export function UrlExtractClient() {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://www.linkedin.com/in/satyanadella"
                 disabled={loading}
-                className="w-full rounded-lg border border-slate-300 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81] disabled:bg-slate-50 disabled:text-slate-500"
+                className="input-glow w-full rounded-lg border border-slate-300 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81] disabled:bg-slate-50 disabled:text-slate-500"
               />
             </div>
           </div>
@@ -193,10 +208,16 @@ export function UrlExtractClient() {
 
           {/* Live Progress Milestones during extraction */}
           {loading && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50/80 p-4 space-y-3">
+            <div
+              className="rounded-lg border border-slate-200 p-4 space-y-5"
+              style={{ background: "var(--surface-muted)" }}
+            >
               <div className="flex items-center justify-between text-xs font-semibold text-slate-800">
                 <span className="flex items-center gap-2">
-                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#0f4c81] border-t-transparent" />
+                  <div
+                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent"
+                    style={{ borderColor: "var(--color-primary)", borderTopColor: "transparent" }}
+                  />
                   Bright Data Scraper In Progress...
                 </span>
                 <span className="text-slate-500 font-mono text-[11px]">
@@ -207,42 +228,63 @@ export function UrlExtractClient() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-600">
+              {/* Animated progress rail */}
+              <div className="relative px-1 pt-1">
                 <div
-                  className={`flex items-center gap-1.5 rounded p-2 ${
-                    progressStep >= 1 ? "bg-white text-slate-900 font-medium shadow-xs" : "opacity-50"
-                  }`}
-                >
-                  <CheckCircle2
-                    className={`h-3.5 w-3.5 ${
-                      progressStep >= 1 ? "text-emerald-600" : "text-slate-300"
-                    }`}
-                  />
-                  <span>1. Trigger Bright Data API</span>
-                </div>
-                <div
-                  className={`flex items-center gap-1.5 rounded p-2 ${
-                    progressStep >= 2 ? "bg-white text-slate-900 font-medium shadow-xs" : "opacity-50"
-                  }`}
-                >
-                  <CheckCircle2
-                    className={`h-3.5 w-3.5 ${
-                      progressStep >= 2 ? "text-emerald-600" : "text-slate-300"
-                    }`}
-                  />
-                  <span>2. Scrape Live Profile</span>
-                </div>
-                <div
-                  className={`flex items-center gap-1.5 rounded p-2 ${
-                    progressStep >= 3 ? "bg-white text-slate-900 font-medium shadow-xs" : "opacity-50"
-                  }`}
-                >
-                  <CheckCircle2
-                    className={`h-3.5 w-3.5 ${
-                      progressStep >= 3 ? "text-emerald-600" : "text-slate-300"
-                    }`}
-                  />
-                  <span>3. Format Tables &amp; CSV</span>
+                  className="absolute left-5 right-5 top-[15px] h-0.5 rounded-full"
+                  style={{ background: "var(--border-strong)" }}
+                />
+                <motion.div
+                  className="absolute left-5 top-[15px] h-0.5 rounded-full"
+                  style={{ background: "var(--gradient-brand)" }}
+                  initial={false}
+                  animate={{ width: `calc((100% - 2.5rem) * ${railFillPercent / 100})` }}
+                  transition={reduceMotion ? { duration: 0 } : { duration: 0.6, ease: "easeInOut" }}
+                />
+
+                <div className="relative grid grid-cols-3 gap-2 text-[11px] text-slate-600">
+                  {PROGRESS_STEPS.map((step) => {
+                    const done = progressStep > step.threshold;
+                    const active = progressStep === step.threshold;
+                    const reached = progressStep >= step.threshold;
+                    return (
+                      <div key={step.label} className="flex flex-col items-center gap-1.5 text-center">
+                        <motion.div
+                          className="flex h-7 w-7 items-center justify-center rounded-full border-2"
+                          style={{
+                            background: reached ? "var(--surface)" : "var(--surface-muted)",
+                            borderColor: reached ? "var(--color-success)" : "var(--border-strong)",
+                          }}
+                          animate={
+                            active && !reduceMotion
+                              ? { scale: [1, 1.18, 1] }
+                              : { scale: 1 }
+                          }
+                          transition={
+                            active && !reduceMotion
+                              ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+                              : { duration: 0.2 }
+                          }
+                        >
+                          <CheckCircle2
+                            className="h-4 w-4"
+                            style={{ color: reached ? "var(--color-success)" : "var(--border-strong)" }}
+                          />
+                        </motion.div>
+                        <span className={reached ? "font-medium text-slate-900" : "opacity-60"}>
+                          {step.label}
+                        </span>
+                        {done && (
+                          <span
+                            className="text-[10px] font-semibold"
+                            style={{ color: "var(--color-success)" }}
+                          >
+                            Done
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -258,7 +300,7 @@ export function UrlExtractClient() {
             <button
               type="submit"
               disabled={loading || !url.trim()}
-              className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#0f4c81] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0a365c] focus:outline-none focus:ring-2 focus:ring-[#0f4c81] focus:ring-offset-2 ${
+              className={`cta-primary inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2 ${
                 loading || !url.trim() ? "opacity-60 cursor-not-allowed" : ""
               }`}
             >

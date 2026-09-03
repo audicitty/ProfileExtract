@@ -1,18 +1,129 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
+
+  /* Brand */
+  --color-primary: #0f4c81;
+  --color-primary-hover: #0a365c;
+  --color-primary-soft: #e0ecf5;
+  --color-secondary: #7c3aed;
+  --color-secondary-hover: #6d28d9;
+  --color-secondary-soft: #f1e8fd;
+  --gradient-brand: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  --gradient-brand-soft: linear-gradient(135deg, rgba(15, 76, 129, 0.12) 0%, rgba(124, 58, 237, 0.12) 100%);
+
+  /* Semantic */
+  --color-success: #10b981;
+  --color-success-soft: #d1fae5;
+  --color-success-border: #6ee7b7;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #fef3c7;
+  --color-warning-border: #fcd34d;
+  --color-danger: #ef4444;
+  --color-danger-soft: #fee2e2;
+  --color-danger-border: #fca5a5;
+
+  /* Base surfaces */
   --background: #f8fafc;
   --foreground: #0f172a;
-  --accent-primary: #0f4c81;
-  --accent-hover: #0a365c;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+
+  /* Elevation system — soft, multi-stop shadows, not just shadow-sm */
+  --shadow-surface-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 1px rgba(15, 23, 42, 0.03);
+  --shadow-surface-2: 0 4px 10px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.05);
+  --shadow-surface-3: 0 12px 28px rgba(15, 23, 42, 0.1), 0 4px 10px rgba(15, 23, 42, 0.06);
+  --shadow-surface-4: 0 28px 60px -12px rgba(15, 23, 42, 0.22), 0 10px 20px rgba(15, 23, 42, 0.1);
+
+  /* Aurora / gradient-mesh stops */
+  --aurora-1: #0f4c81;
+  --aurora-2: #7c3aed;
+  --aurora-3: #06b6d4;
+
+  --radius-lg: 1rem;
 }
 
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/*
+ * Automatic OS-driven dark mode (prefers-color-scheme) is intentionally NOT
+ * wired up yet. Only Navbar/Footer (Prompt 1) have been converted to
+ * dark-mode-aware tokens so far; every other page is still hardcoded light
+ * until Prompts 2-7 land. Auto-activating dark mode now would mismatch a
+ * dark navbar/footer against still-light pages for any OS-dark-mode visitor.
+ * Dark mode is toggle-only (via [data-theme="dark"] below) until Prompt 8's
+ * final consistency pass converts every page — at that point, re-enable with:
+ *
+ *   @media (prefers-color-scheme: dark) {
+ *     :root:not([data-theme="light"]) { ...same values as [data-theme="dark"] below... }
+ *   }
+ */
+
+/* Explicit theme override via data-theme, set by the theme toggle mechanism */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #4d9fe0;
+  --color-primary-hover: #7cbcec;
+  --color-primary-soft: rgba(77, 159, 224, 0.16);
+  --color-secondary: #a78bfa;
+  --color-secondary-hover: #c4b5fd;
+  --color-secondary-soft: rgba(167, 139, 250, 0.16);
+
+  --color-success: #34d399;
+  --color-success-soft: rgba(16, 185, 129, 0.16);
+  --color-success-border: rgba(52, 211, 153, 0.4);
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(245, 158, 11, 0.16);
+  --color-warning-border: rgba(251, 191, 36, 0.4);
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(239, 68, 68, 0.16);
+  --color-danger-border: rgba(248, 113, 113, 0.4);
+
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --surface: #111827;
+  --surface-muted: #1e293b;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  --glass-bg: rgba(17, 24, 39, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.06);
+
+  --shadow-surface-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-surface-2: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-surface-3: 0 16px 32px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-surface-4: 0 32px 64px -12px rgba(0, 0, 0, 0.65), 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/*
+ * Layered under Tailwind's `base` so page-level utility classes (bg-slate-50,
+ * text-slate-900, etc. — still hardcoded light until each page's redesign
+ * prompt lands) keep winning the cascade. Unlayered rules beat layered
+ * utilities regardless of specificity, so leaving this unlayered would flip
+ * the whole app's background dark for OS-dark-mode users while every page's
+ * text stayed dark-on-dark.
+ */
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 }
 
 /* Custom scrollbars for clean minimal data tables */
@@ -26,10 +137,209 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-strong);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-primary);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Elevation utilities — surface-1 (barely lifted) through surface-4 (modal-level) */
+/* ---------------------------------------------------------------------- */
+
+.surface-1 {
+  box-shadow: var(--shadow-surface-1);
+}
+
+.surface-2 {
+  box-shadow: var(--shadow-surface-2);
+}
+
+.surface-3 {
+  box-shadow: var(--shadow-surface-3);
+}
+
+.surface-4 {
+  box-shadow: var(--shadow-surface-4);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Glass-panel surface — the glassmorphism 2.0 primitive for cards/navbars */
+/* ---------------------------------------------------------------------- */
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--shadow-surface-2);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Gradient text + brand gradient fill helpers */
+/* ---------------------------------------------------------------------- */
+
+.gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gradient-brand {
+  background: var(--gradient-brand);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Aurora / gradient-mesh animated background for hero-style sections */
+/* ---------------------------------------------------------------------- */
+
+.aurora-bg {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.aurora-bg::before {
+  content: "";
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  background-image: radial-gradient(38% 38% at 20% 25%, color-mix(in srgb, var(--aurora-1) 55%, transparent) 0%, transparent 70%),
+    radial-gradient(42% 42% at 80% 20%, color-mix(in srgb, var(--aurora-2) 50%, transparent) 0%, transparent 70%),
+    radial-gradient(46% 46% at 50% 80%, color-mix(in srgb, var(--aurora-3) 40%, transparent) 0%, transparent 70%);
+  filter: blur(60px) saturate(140%);
+  animation: aurora-drift 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(-4%, 3%, 0) scale(1.08) rotate(6deg);
+  }
+  100% {
+    transform: translate3d(4%, -3%, 0) scale(1) rotate(-4deg);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Gradient CTA buttons — primary/secondary, glow-on-hover, press feedback */
+/* ---------------------------------------------------------------------- */
+
+.cta-primary {
+  background: var(--gradient-brand);
+  color: #fff;
+  box-shadow: var(--shadow-surface-2);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.cta-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-surface-4), 0 0 28px color-mix(in srgb, var(--color-secondary) 45%, transparent);
+}
+
+.cta-primary:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: var(--shadow-surface-1);
+}
+
+.cta-secondary {
+  background: var(--surface);
+  color: var(--color-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-surface-1);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.cta-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-surface-3);
+  border-color: var(--color-primary);
+}
+
+.cta-secondary:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* ---------------------------------------------------------------------- */
+/* AI badge glow-pulse — signals the flagship AI-powered feature */
+/* ---------------------------------------------------------------------- */
+
+.badge-pulse {
+  animation: badge-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes badge-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-success) 0%, transparent);
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Form input focus glow — layered on top of existing border/ring focus states */
+/* ---------------------------------------------------------------------- */
+
+.input-glow {
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.input-glow:focus {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Error alert entrance — slide-down + settle shake, plays on every mount */
+/* ---------------------------------------------------------------------- */
+
+@keyframes alert-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+  85% {
+    transform: translateX(3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.alert-shake-in {
+  animation: alert-in 420ms ease-out;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Reduced motion — must come after every animation/transition definition */
+/* ---------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .aurora-bg::before {
+    animation: none;
+  }
 }

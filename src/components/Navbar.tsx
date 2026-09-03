@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { FileText, LogOut, User as UserIcon } from "lucide-react";
@@ -8,6 +9,14 @@ import { FileText, LogOut, User as UserIcon } from "lucide-react";
 export function Navbar() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -16,11 +25,21 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+    <header
+      className="glass sticky top-0 z-40 w-full transition-[box-shadow,border-color] duration-300"
+      style={{
+        borderColor: scrolled ? "var(--glass-border)" : "transparent",
+        borderWidth: "0 0 1px 0",
+        boxShadow: scrolled ? "var(--shadow-surface-2)" : "none",
+      }}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 font-semibold text-slate-900 transition hover:opacity-90">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#0f4c81] text-white shadow-sm">
+        <Link href="/" className="group flex items-center gap-2.5 font-semibold text-slate-900 transition hover:opacity-90">
+          <div
+            className="gradient-brand flex h-9 w-9 items-center justify-center rounded-lg text-white transition-transform duration-200 group-hover:scale-105"
+            style={{ boxShadow: "var(--shadow-surface-1)" }}
+          >
             <FileText className="h-4 w-4" />
           </div>
           <div className="flex flex-col">
@@ -47,10 +66,10 @@ export function Navbar() {
               </Link>
               <Link
                 href="/jobs"
-                className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-[#0f4c81] hover:text-[#0a365c] transition"
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition hover:-translate-y-0.5 hover:text-[var(--color-primary-hover)]"
               >
                 <span>Job Matcher</span>
-                <span className="rounded-full bg-emerald-100 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800">
+                <span className="badge-pulse rounded-full bg-[var(--color-success-soft)] px-1.5 py-0.2 text-[10px] font-bold text-[var(--color-success)]">
                   AI
                 </span>
               </Link>
@@ -60,7 +79,7 @@ export function Navbar() {
               </div>
               <button
                 onClick={handleSignOut}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-900 hover:shadow-[var(--shadow-surface-2)]"
                 aria-label="Sign out"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -71,13 +90,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="rounded-md px-3.5 py-1.5 text-sm font-medium text-slate-700 transition hover:text-slate-900 hover:bg-slate-100"
+                className="rounded-md px-3.5 py-1.5 text-sm font-medium text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:text-slate-900 hover:bg-slate-100"
               >
                 Sign In
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center rounded-md bg-[#0f4c81] px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#0a365c]"
+                className="inline-flex items-center justify-center rounded-md bg-[var(--color-primary)] px-3.5 py-1.5 text-sm font-medium text-white shadow-[var(--shadow-surface-1)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-[var(--color-primary-hover)] hover:shadow-[var(--shadow-surface-3)]"
               >
                 Get Started
               </Link>
