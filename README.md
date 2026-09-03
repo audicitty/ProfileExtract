@@ -1,147 +1,98 @@
-# ProfileExtract
+# ProfileExtract (profex)
 
-A minimal, production-ready full-stack web application that allows users to paste raw visible text copied directly from any LinkedIn profile and converts it into clean, normalized structured data in an interactive table with a one-click client-side CSV export.
+A full-stack, production-ready AI career intelligence platform built with **Next.js 16**, **Google Gemini AI**, **Bright Data**, and **Better Auth**.
 
 ---
 
-## Key Highlights
+## Three Core Features
 
-- **Stateless Extraction**: Zero database persistence for profile data. Submitted text and structured data live only in active memory.
-- **Strict Schema Enforcement**: Powered by Google Gemini AI with strict `responseSchema` (structured JSON) to prevent hallucination — missing fields default to empty strings or empty arrays.
-- **Client-Side RFC 4180 CSV Export**: Native JavaScript CSV generator with proper escaping for commas, double quotes, and multi-line descriptions.
-- **Email + Password Authentication**: Secure authentication via [Better Auth](https://better-auth.com) and [Drizzle ORM](https://orm.drizzle.team) with PostgreSQL.
-- **Free-Tier Compatible**: Runs completely on free-tier infrastructure (PostgreSQL via Neon / Supabase, Google Gemini API, Vercel Hobby tier).
+### 1. LinkedIn Text Extractor (`/dashboard`)
+- Copy raw visible text directly from any LinkedIn profile (`Ctrl+A` -> `Ctrl+C`).
+- Gemini AI normalizes the text into structured JSON fields (Contact, Headline, Experience, Education, Projects, Certifications, Skills).
+- One-click RFC 4180 client-side CSV download.
+- Zero DB persistence for profile text (completely stateless & privacy-focused).
+
+### 2. LinkedIn URL Profile Extractor (`/url-extract`)
+- Provide any public LinkedIn profile URL (e.g. `https://www.linkedin.com/in/username`).
+- Scrapes live profile data via Bright Data Scraper API (`gd_l1viktl72bvl7bjuj0`).
+- Normalizes data and enriches missing technical/domain skills using Gemini AI.
+
+### 3. AI Resume Scanner & LinkedIn Job Matcher (`/jobs`)
+- Upload a **PDF resume** or paste resume text.
+- Gemini AI scans qualifications, seniority level, core tech stack, and target career trajectory roles.
+- **Indian IT Hubs Multi-Location Filtering**:
+  - Multi-select across **Bangalore**, **Gurgaon**, **Delhi / NCR**, **Noida**, **Chennai**, **Jaipur**, **Indore**, **Hyderabad**, **Pune**, **Mumbai**, and **Remote (India)**.
+- **Real-Time Live LinkedIn Job Scraping**:
+  - Directly queries LinkedIn's official public jobs search API across selected cities.
+  - **100% Real Direct Links**:
+    - `Apply on LinkedIn`: Direct `/jobs/view/{id}` link opening the exact active job posting.
+    - `Company Profile`: Direct verified LinkedIn organization page (`/company/{slug}`).
+- **AI Fit Match Score (0–100%)**: Calculates skill alignment, strengths breakdown, and missing skills to brush up on.
+- **Job CSV Export**: One-click download of all matched opportunities with salaries, apply links, and match scores.
 
 ---
 
 ## Tech Stack
 
-- **Framework**: [Next.js](https://nextjs.org/) (App Router, TypeScript)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Auth**: [Better Auth](https://better-auth.com/) (Email + Password)
-- **Database & ORM**: PostgreSQL + [Drizzle ORM](https://orm.drizzle.team/)
-- **AI Structuring**: [Google Gemini API](https://ai.google.dev/) (`gemini-2.5-flash` / `gemini-1.5-flash` with `responseSchema`)
-- **CSV Export**: Native JavaScript (RFC-4180 compliant)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack, TypeScript 5)
+- **UI Library**: React 19, Tailwind CSS v4, Lucide React
+- **Authentication**: [Better Auth](https://better-auth.com/) (Email + Password sessions)
+- **Database & ORM**: PostgreSQL via [Drizzle ORM](https://orm.drizzle.team/)
+- **AI Models**: [Google Gemini API](https://ai.google.dev/) (`gemini-2.5-flash` with `responseSchema`)
+- **Live Job Scraping**: LinkedIn public guest search endpoint
+- **Profile Web Scraping**: Bright Data Dataset API
+- **Testing**: Node test runner via `tsx`
 
 ---
 
-## Architecture & Data Flow
-
-```
-[User Browser]
-       │
-       ▼ (1. Paste visible LinkedIn profile text)
-[Dashboard Workspace] ──(Client Validation >=100 chars)──► [Inline Error if invalid]
-       │
-       ▼ (2. POST /api/extract)
-[Server-side API Route]
-       ├──► 3. Server-side session verification (Better Auth / PostgreSQL)
-       ├──► 4. Server-side input validation (non-empty, >=100 chars)
-       └──► 5. Google Gemini API (schema-enforced, 15s timeout via AbortController)
-       │
-       ▼ (6. Return structured JSON payload — zero DB write)
-[Structured Profile View]
-       ├──► Interactive cards (Overview, Experience, Education, Projects, Certs, Skills)
-       └──► 7. One-Click Native CSV Export (Browser Blob download)
-```
-
----
-
-## Fixed Profile Extraction Schema
-
-```json
-{
-  "first_name": "string",
-  "last_name": "string",
-  "headline": "string",
-  "current_company": "string",
-  "current_title": "string",
-  "location": "string",
-  "about": "string",
-  "education": [
-    {
-      "school": "string",
-      "degree": "string",
-      "years": "string"
-    }
-  ],
-  "experience": [
-    {
-      "company": "string",
-      "title": "string",
-      "duration": "string",
-      "description": "string"
-    }
-  ],
-  "projects": [
-    {
-      "name": "string",
-      "description": "string"
-    }
-  ],
-  "certifications": [
-    {
-      "name": "string",
-      "issuer": "string",
-      "date": "string"
-    }
-  ],
-  "skills": ["string"]
-}
-```
-
----
-
-## Environment Variables
-
-Create a `.env.local` file in the root directory:
-
-```env
-# PostgreSQL connection string (Neon / Supabase / Local PostgreSQL)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/profileextract"
-
-# Better Auth Secret (minimum 32 characters)
-BETTER_AUTH_SECRET="your_secure_random_secret_at_least_32_chars_long"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-
-# Google Gemini API Key
-GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key_here"
-```
-
----
-
-## Quickstart & Setup
+## Getting Started
 
 ### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Push Database Schema
+### 2. Setup Environment Variables
+Create a `.env.local` file:
+```env
+# Database (PostgreSQL - Neon / Supabase / Local)
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# Better Auth Secret (minimum 32 characters)
+BETTER_AUTH_SECRET="your_32_character_secret_key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Google Gemini API Key
+GOOGLE_GENERATIVE_AI_API_KEY="your_gemini_api_key"
+
+# Bright Data API (Optional for profile URL scraping)
+BRIGHTDATA_API_KEY="your_brightdata_key"
+BRIGHTDATA_DATASET_ID="gd_l1viktl72bvl7bjuj0"
+```
+
+### 3. Push Database Schema
 ```bash
 npm run db:push
 ```
 
-### 3. Run Development Server
+### 4. Run Development Server
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 4. Run Tests & Build
+### 5. Run Tests & Production Build
 ```bash
-# Run unit tests (CSV generation & RFC-4180 escaping)
 npm test
-
-# Run linter
-npm run lint
-
-# Run production build
 npm run build
 ```
 
 ---
 
-## License
+## Documentation for Agents & Developers
+For full architectural details, schemas, and implementation guides, see [`CLAUDE.md`](./CLAUDE.md).
 
+---
+
+## License
 MIT License.
