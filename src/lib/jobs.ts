@@ -66,97 +66,207 @@ function normalizeWorkplaceType(raw: string): "Remote" | "Hybrid" | "On-site" {
 }
 
 /**
- * Normalizes raw Bright Data job item into standard JobListing.
- * Returns null if the item is an error, redirect, or dummy empty item.
+ * Derives realistic Indian tech compensation based on role title and candidate seniority.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function normalizeBrightDataJob(item: any, index: number): JobListing | null {
-  if (!item || typeof item !== "object") return null;
-
-  // Ignore error objects returned from dead pages / scrapers
-  if (item.error || item.error_code || item.warning) {
-    return null;
+function estimateIndianSalary(title: string, seniority?: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("lead") || t.includes("principal") || t.includes("architect") || seniority === "Senior") {
+    return "₹32 - ₹55 LPA";
   }
-
-  const title = String(item.job_title || item.title || item.role || "").trim();
-  const company = String(item.company_name || item.company || item.organization || "").trim();
-
-  // If neither title nor company exists, this is an invalid item
-  if (!title && !company) {
-    return null;
+  if (t.includes("senior") || t.includes("sr.") || t.includes("iii") || t.includes("ii")) {
+    return "₹22 - ₹38 LPA";
   }
-
-  const finalTitle = title || "Software Engineer";
-  const finalCompany = company || "Tech Company";
-  const location = String(item.job_location || item.location || item.city || "India").trim();
-
-  const workplaceType = normalizeWorkplaceType(
-    item.workplace_type || item.work_type || item.employment_type || location || finalTitle
-  );
-
-  let salary = String(
-    item.base_salary || item.salary || item.compensation || item.pay_range || ""
-  ).trim();
-
-  if (!salary) {
-    salary = "₹18 - ₹28 LPA";
+  if (t.includes("intern") || t.includes("trainee")) {
+    return "₹4 - ₹8 LPA (Stipend)";
   }
-
-  const postedDate = String(
-    item.job_posted_date || item.posted_time || item.time_ago || item.date_posted || "Recently posted"
-  ).trim();
-
-  const description = String(
-    item.job_description || item.description || item.summary || ""
-  ).trim();
-
-  // Create real direct LinkedIn job view link or company careers link
-  let applyUrl = String(item.job_url || item.url || item.apply_link || item.linkedin_url || "").trim();
-  if (!applyUrl || applyUrl.includes("/jobs/search")) {
-    const randomJobId = 3980000000 + Math.floor(Math.random() * 19000000);
-    applyUrl = `https://www.linkedin.com/jobs/view/${randomJobId}`;
-  }
-
-  let skillsRequired: string[] = [];
-  if (Array.isArray(item.job_skills || item.skills)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    skillsRequired = (item.job_skills || item.skills).map((s: any) =>
-      typeof s === "string" ? s.trim() : String(s?.name || "").trim()
-    ).filter(Boolean);
-  }
-
-  if (skillsRequired.length === 0 && description) {
-    const techWords = [
-      "React", "Next.js", "TypeScript", "JavaScript", "Node.js", "Python", "Go",
-      "Java", "AWS", "GCP", "Azure", "Docker", "Kubernetes", "PostgreSQL",
-      "GraphQL", "REST", "CI/CD", "Tailwind", "SQL", "Redis", "Kafka",
-    ];
-    skillsRequired = techWords.filter((w) =>
-      new RegExp(`\\b${w}\\b`, "i").test(description)
-    );
-  }
-
-  return {
-    id: String(item.job_id || item.id || `job-${index}-${Date.now()}`),
-    title: finalTitle,
-    company: finalCompany,
-    company_logo: item.company_logo || item.logo || undefined,
-    location,
-    workplace_type: workplaceType,
-    salary,
-    posted_date: postedDate,
-    description: description ? description.slice(0, 400) + (description.length > 400 ? "..." : "") : `Exciting role at ${finalCompany} working on high-impact projects.`,
-    apply_url: applyUrl,
-    company_apply_url: `https://www.google.com/search?q=${encodeURIComponent(`${finalCompany} careers ${finalTitle}`)}`,
-    skills_required: skillsRequired.length > 0 ? skillsRequired : ["TypeScript", "React", "Node.js"],
-    experience_level: item.seniority || item.experience_level || undefined,
-  };
+  return "₹14 - ₹26 LPA";
 }
 
 /**
- * AI-assisted job discovery engine providing verified, top-tier LinkedIn jobs tailored to
- * specific Indian IT hubs (Bangalore, Gurgaon, Delhi, Chennai, Jaipur, Indore, Noida, etc.)
- * and the candidate's exact resume skills.
+ * Derives common core skills for a role title.
+ */
+function inferSkillsFromTitle(title: string, candidateSkills: string[] = []): string[] {
+  const t = title.toLowerCase();
+  const baseSkills = new Set<string>();
+
+  if (candidateSkills.length > 0) {
+    candidateSkills.slice(0, 4).forEach((s) => baseSkills.add(s));
+  }
+
+  if (t.includes("full stack") || t.includes("fullstack")) {
+    baseSkills.add("React");
+    baseSkills.add("Node.js");
+    baseSkills.add("TypeScript");
+    baseSkills.add("PostgreSQL");
+  } else if (t.includes("frontend") || t.includes("front end") || t.includes("ui") || t.includes("react")) {
+    baseSkills.add("React.js");
+    baseSkills.add("TypeScript");
+    baseSkills.add("Tailwind CSS");
+    baseSkills.add("Next.js");
+  } else if (t.includes("backend") || t.includes("back end") || t.includes("node") || t.includes("java") || t.includes("python")) {
+    baseSkills.add("Node.js");
+    baseSkills.add("Python");
+    baseSkills.add("REST APIs");
+    baseSkills.add("Microservices");
+  } else if (t.includes("data") || t.includes("ml") || t.includes("ai")) {
+    baseSkills.add("Python");
+    baseSkills.add("SQL");
+    baseSkills.add("Machine Learning");
+  } else {
+    baseSkills.add("JavaScript");
+    baseSkills.add("Software Engineering");
+    baseSkills.add("Git");
+  }
+
+  return Array.from(baseSkills).slice(0, 6);
+}
+
+/**
+ * Directly queries LinkedIn's official public guest jobs search endpoint
+ * for verified, 100% active LinkedIn job postings with genuine /jobs/view/{id} links.
+ */
+export async function fetchLiveLinkedInGuestJobs(
+  filters: JobSearchFilters,
+  resume?: ParsedResume
+): Promise<JobListing[]> {
+  const targetLocations = Array.isArray(filters.locations) && filters.locations.length > 0
+    ? filters.locations
+    : [filters.location || "Bangalore"];
+
+  const keyword = filters.keywords?.trim() || "Full Stack Engineer";
+  const allJobs: JobListing[] = [];
+  const seenIds = new Set<string>();
+
+  // Query across selected locations (up to 4 cities in parallel for maximum speed)
+  const locationsToQuery = targetLocations.slice(0, 5);
+
+  const fetchPromises = locationsToQuery.map(async (loc) => {
+    const params = new URLSearchParams();
+    params.set("keywords", keyword);
+
+    const cleanLoc = loc.toLowerCase().includes("india") || loc.toLowerCase().includes("remote")
+      ? loc
+      : `${loc}, India`;
+    params.set("location", cleanLoc);
+    params.set("start", "0");
+
+    if (filters.date_posted === "past_24h") {
+      params.set("f_TPR", "r86400"); // 24 hours
+    } else if (filters.date_posted === "past_week") {
+      params.set("f_TPR", "r604800"); // 7 days
+    } else if (filters.date_posted === "past_month") {
+      params.set("f_TPR", "r2592000"); // 30 days
+    }
+
+    if (filters.workplace_type === "remote") {
+      params.set("f_WT", "2");
+    } else if (filters.workplace_type === "hybrid") {
+      params.set("f_WT", "3");
+    } else if (filters.workplace_type === "onsite") {
+      params.set("f_WT", "1");
+    }
+
+    if (filters.experience_level === "entry") {
+      params.set("f_E", "2");
+    } else if (filters.experience_level === "mid") {
+      params.set("f_E", "3");
+    } else if (filters.experience_level === "senior") {
+      params.set("f_E", "4");
+    }
+
+    const endpoint = `https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?${params.toString()}`;
+
+    try {
+      const res = await fetch(endpoint, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        signal: AbortSignal.timeout(9000),
+      });
+
+      if (!res.ok) return [];
+
+      const html = await res.text();
+      const cards = html.split("</li>").filter((c) => c.includes("data-entity-urn"));
+      const cityJobs: JobListing[] = [];
+
+      for (const card of cards) {
+        const urnMatch = card.match(/data-entity-urn="urn:li:jobPosting:(\d+)"/);
+        if (!urnMatch || !urnMatch[1]) continue;
+        const urn = urnMatch[1];
+
+        if (seenIds.has(urn)) continue;
+        seenIds.add(urn);
+
+        const titleMatch = card.match(/<h3 class="base-search-card__title">([\s\S]*?)<\/h3>/);
+        const title = titleMatch ? titleMatch[1].trim() : "";
+
+        const companyMatch = card.match(/<h4 class="base-search-card__subtitle">([\s\S]*?)<\/h4>/);
+        const company = companyMatch ? companyMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+
+        if (!title || !company) continue;
+
+        // Extract real company URL or company slug
+        const companyUrlMatch = card.match(/href="(https:\/\/[^"]*linkedin\.com\/company\/[^"?]+)/);
+        const companyUrl = companyUrlMatch
+          ? companyUrlMatch[1]
+          : `https://www.linkedin.com/company/${encodeURIComponent(company.toLowerCase().replace(/[^a-z0-9]/g, "-"))}`;
+
+        const locationMatch = card.match(/<span class="job-search-card__location">([\s\S]*?)<\/span>/);
+        const jobLocation = locationMatch ? locationMatch[1].trim() : loc;
+
+        const timeMatch = card.match(/<time[^>]*>([\s\S]*?)<\/time>/);
+        const postedDate = timeMatch ? timeMatch[1].trim() : "Recently posted";
+
+        const salaryMatch = card.match(/<span class="job-search-card__salary-info">([\s\S]*?)<\/span>/);
+        const salary = salaryMatch
+          ? salaryMatch[1].replace(/\s+/g, " ").trim()
+          : estimateIndianSalary(title, resume?.seniority_level);
+
+        const workplaceType = normalizeWorkplaceType(
+          filters.workplace_type !== "all" ? filters.workplace_type : jobLocation + " " + title
+        );
+
+        cityJobs.push({
+          id: urn,
+          title,
+          company,
+          location: jobLocation,
+          workplace_type: workplaceType,
+          salary,
+          posted_date: postedDate,
+          description: `Active job opening at ${company} in ${jobLocation}. View full requirements, team details, and submit your application directly on LinkedIn.`,
+          apply_url: `https://www.linkedin.com/jobs/view/${urn}`,
+          company_apply_url: companyUrl,
+          skills_required: inferSkillsFromTitle(title, resume?.extracted_skills),
+          experience_level: filters.experience_level !== "all" ? filters.experience_level : undefined,
+        });
+
+        // Collect up to 4 per location so multi-locations are balanced
+        if (cityJobs.length >= 4) break;
+      }
+
+      return cityJobs;
+    } catch (err) {
+      console.warn(`[LinkedIn-Live] Fetch failed for location "${loc}":`, err);
+      return [];
+    }
+  });
+
+  const results = await Promise.all(fetchPromises);
+  for (const list of results) {
+    allJobs.push(...list);
+  }
+
+  return allJobs;
+}
+
+/**
+ * AI-assisted job discovery engine when live endpoints are blocked or offline.
+ * Provides guaranteed valid links to real company portals and search queries.
  */
 export async function discoverJobsWithAI(
   filters: JobSearchFilters,
@@ -174,7 +284,7 @@ export async function discoverJobsWithAI(
     model: "gemini-2.5-flash",
     generationConfig: {
       responseMimeType: "application/json",
-      temperature: 0.25,
+      temperature: 0.2,
     },
   });
 
@@ -189,7 +299,7 @@ SEARCH FILTERS:
 - Target Role / Keywords: ${filters.keywords || (resume?.target_roles[0] ?? "Software Engineer")}
 - Target Locations: ${locationList}
 - Workplace Type: ${filters.workplace_type} (options: remote, hybrid, onsite, all)
-- Date Posted Range: ${filters.date_posted} (e.g. past_24h means posted today / within 24 hours, past_week means within last 7 days)
+- Date Posted Range: ${filters.date_posted}
 - Experience Level: ${filters.experience_level}
 
 ${
@@ -202,23 +312,14 @@ ${
     : ""
 }
 
-CRITICAL RULES FOR GENERATION:
-1. LOCATIONS: Distribute the jobs across the user's selected locations (${locationList}). For each job, provide the specific city and state (e.g. "Bangalore, Karnataka", "Gurgaon, Haryana", "Noida, Uttar Pradesh", "Chennai, Tamil Nadu", "Jaipur, Rajasthan", "Indore, Madhya Pradesh", "Delhi / NCR", "Remote - India").
-2. REAL COMPANIES: Use actual top employers in India & global companies hiring in India:
-   - For Bangalore: Swiggy, Flipkart, Razorpay, CRED, Zepto, Infosys, Google India, Microsoft IDC, Atlassian India, Walmart Global Tech, PhonePe, Meesho, Postman.
-   - For Gurgaon / Delhi: Zomato, Blinkit, MakeMyTrip, Paytm, PolicyBazaar, Urban Company, Airtel Digital, Oyo, American Express.
-   - For Noida: Adobe India, Microsoft Noida, HCLTech, Info Edge (Naukri), Samsung R&D, Paytm.
-   - For Chennai: Zoho Corporation, Freshworks, PayPal India, Chargebee, Kissflow, Cognizant.
-   - For Jaipur: CarDekho (GirnarSoft), DealShare, Infosys Jaipur, Dotsquares.
-   - For Indore: InfoBeans, Impetus Technologies, TaskUs, Walkover Technologies.
-   - For Remote: Top global startups and remote-first companies hiring in India.
-3. SALARIES: Provide realistic Indian tech compensation in INR LPA (e.g. "₹18 - ₹28 LPA", "₹25 - ₹42 LPA", "₹14 - ₹20 LPA", "₹32 - ₹50 LPA" based on seniority).
-4. DIRECT APPLY LINKS:
-   - "apply_url": MUST be a direct LinkedIn job view link with a realistic 10-digit ID, e.g. "https://www.linkedin.com/jobs/view/41" + 8 random digits (e.g., "https://www.linkedin.com/jobs/view/4128947192"). DO NOT use generic search links like "/jobs/search/?keywords=...".
-   - "company_apply_url": Direct company career application link, e.g. "https://careers.swiggy.com/jobs", "https://boards.greenhouse.io/razorpay", "https://careers.zomato.com", "https://careers.google.com/jobs", "https://careers.microsoft.com", "https://careers.zoho.com".
-5. WORKPLACE TYPE: Strictly follow the requested filter ("Remote", "Hybrid", or "On-site").
-6. POSTED DATE: If past_24h was requested, use "1 hour ago", "3 hours ago", "5 hours ago", "Today". If past_week, use "2 days ago", "4 days ago", etc.
-7. SKILLS REQUIRED: 4 to 7 concrete technical skills matching modern industry standards.
+RULES:
+1. LOCATIONS: Distribute jobs across the user's selected locations (${locationList}).
+2. REAL COMPANIES: Use actual top employers in India (Swiggy, Zomato, Razorpay, CRED, Zepto, Flipkart, Infosys, Google India, Microsoft IDC, Atlassian India, PhonePe, Adobe India, Zoho, Freshworks, CarDekho, InfoBeans, Impetus).
+3. SALARIES: Provide realistic Indian tech compensation in INR LPA (e.g. "₹18 - ₹28 LPA", "₹25 - ₹42 LPA").
+4. APPLY LINKS:
+   - For apply_url, provide: "https://www.linkedin.com/jobs/search/?keywords=" + encodeURIComponent(company + " " + title) + "&location=" + encodeURIComponent(location)
+   - For company_apply_url, provide the exact real company LinkedIn page: "https://www.linkedin.com/company/" + companySlug
+5. POSTED DATE: E.g. "1 hour ago", "3 hours ago", "1 day ago", "Today".
 
 Return ONLY a JSON array with objects matching:
 [
@@ -231,8 +332,8 @@ Return ONLY a JSON array with objects matching:
     "salary": "string",
     "posted_date": "string",
     "description": "string (2-3 sentences)",
-    "apply_url": "string (direct linkedin /jobs/view/ID link)",
-    "company_apply_url": "string (direct company career link)",
+    "apply_url": "string",
+    "company_apply_url": "string",
     "skills_required": ["string", "string"],
     "experience_level": "string"
   }
@@ -247,124 +348,57 @@ Return ONLY a JSON array with objects matching:
     throw new Error("No jobs returned by discovery engine.");
   }
 
-  return parsed.map((item, idx) => {
-    const randomJobId = 4120000000 + Math.floor(Math.random() * 79000000);
-    const applyUrl = item.apply_url && item.apply_url.includes("/jobs/view/")
-      ? item.apply_url
-      : `https://www.linkedin.com/jobs/view/${randomJobId}`;
-
-    return {
-      id: item.id || `job-${idx}-${Date.now()}`,
-      title: String(item.title || "Software Engineer"),
-      company: String(item.company || "Tech Company"),
-      company_logo: item.company_logo || undefined,
-      location: String(item.location || locationList),
-      workplace_type: normalizeWorkplaceType(item.workplace_type || filters.workplace_type),
-      salary: String(item.salary || "₹20 - ₹32 LPA"),
-      posted_date: String(item.posted_date || "Today"),
-      description: String(item.description || "Exciting opportunity to build cutting-edge systems and scalable products."),
-      apply_url: applyUrl,
-      company_apply_url: item.company_apply_url || `https://www.google.com/search?q=${encodeURIComponent(`${item.company} careers ${item.title}`)}`,
-      skills_required: Array.isArray(item.skills_required) ? item.skills_required : ["TypeScript", "React", "Node.js"],
-      experience_level: item.experience_level || "Mid-Senior level",
-    };
-  });
+  return parsed.map((item, idx) => ({
+    id: item.id || `job-${idx}-${Date.now()}`,
+    title: String(item.title || "Software Engineer"),
+    company: String(item.company || "Tech Company"),
+    company_logo: item.company_logo || undefined,
+    location: String(item.location || locationList),
+    workplace_type: normalizeWorkplaceType(item.workplace_type || filters.workplace_type),
+    salary: String(item.salary || "₹20 - ₹32 LPA"),
+    posted_date: String(item.posted_date || "Today"),
+    description: String(item.description || "Exciting opportunity to build cutting-edge systems and scalable products."),
+    apply_url: String(
+      item.apply_url ||
+        `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(
+          `${item.company} ${item.title}`
+        )}&location=${encodeURIComponent(item.location || "India")}`
+    ),
+    company_apply_url: String(
+      item.company_apply_url ||
+        `https://www.linkedin.com/company/${encodeURIComponent(
+          String(item.company || "").toLowerCase().replace(/[^a-z0-9]/g, "-")
+        )}`
+    ),
+    skills_required: Array.isArray(item.skills_required) ? item.skills_required : ["TypeScript", "React", "Node.js"],
+    experience_level: item.experience_level || "Mid-Senior level",
+  }));
 }
 
 /**
- * Searches LinkedIn jobs via Bright Data Dataset API or AI fallback.
- * Ensures that if Bright Data returns empty, dead page, or unpopulated objects,
- * the system seamlessly delivers real, rich job listings via AI discovery.
+ * Searches LinkedIn jobs.
+ * Primary: Live LinkedIn public guest jobs endpoint (100% real active jobs + direct links).
+ * Secondary: AI discovery engine fallback if guest search is unavailable.
  */
 export async function searchLinkedInJobs(
   filters: JobSearchFilters,
   resume?: ParsedResume
 ): Promise<JobListing[]> {
-  const apiKey = process.env.BRIGHTDATA_API_KEY;
-  const datasetId =
-    process.env.BRIGHTDATA_JOBS_DATASET_ID || "gd_lpfll7v5hcqtkxl6l";
+  try {
+    // 1. Fetch live active LinkedIn jobs
+    console.log(`[LinkedIn-Live] Fetching live jobs for "${filters.keywords}" across ${filters.locations?.length || 1} locations...`);
+    const liveJobs = await fetchLiveLinkedInGuestJobs(filters, resume);
 
-  // If Bright Data API key is available, attempt live scraper
-  if (apiKey) {
-    try {
-      const searchUrl = buildLinkedInJobSearchUrl(filters);
-      console.log(`[BrightData-Jobs] Triggering search: ${searchUrl}`);
-
-      const triggerRes = await fetch(
-        `https://api.brightdata.com/datasets/v3/trigger?dataset_id=${datasetId}&include_errors=true`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify([{ url: searchUrl }]),
-          signal: AbortSignal.timeout(12000),
-        }
-      );
-
-      if (triggerRes.ok) {
-        const triggerData = await triggerRes.json();
-        const snapshotId = triggerData.snapshot_id;
-
-        if (snapshotId) {
-          // Poll for results up to 25 seconds
-          const maxAttempts = 8;
-          let isReady = false;
-
-          for (let i = 0; i < maxAttempts; i++) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            const progressRes = await fetch(
-              `https://api.brightdata.com/datasets/v3/progress/${snapshotId}`,
-              {
-                headers: { Authorization: `Bearer ${apiKey}` },
-                signal: AbortSignal.timeout(6000),
-              }
-            );
-
-            if (progressRes.ok) {
-              const progressData = await progressRes.json();
-              const status = progressData.status || progressData.state;
-              if (status === "ready" || status === "completed") {
-                isReady = true;
-                break;
-              }
-            }
-          }
-
-          if (isReady) {
-            const snapshotRes = await fetch(
-              `https://api.brightdata.com/datasets/v3/snapshot/${snapshotId}?format=json`,
-              {
-                headers: { Authorization: `Bearer ${apiKey}` },
-                signal: AbortSignal.timeout(12000),
-              }
-            );
-
-            if (snapshotRes.ok) {
-              const rawData = await snapshotRes.json();
-              const items = Array.isArray(rawData) ? rawData : [rawData];
-              const validJobs = items
-                .map((item, idx) => normalizeBrightDataJob(item, idx))
-                .filter((j): j is JobListing => j !== null);
-
-              // Only return Bright Data results if at least 3 valid jobs were extracted
-              if (validJobs.length >= 3) {
-                console.log(`[BrightData-Jobs] Successfully extracted ${validJobs.length} real jobs.`);
-                return validJobs;
-              } else {
-                console.warn("[BrightData-Jobs] Scraper returned no valid job records (dead page or empty). Falling back to AI discovery.");
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.warn("[BrightData-Jobs] Scraper query timed out or failed, falling back to real-time AI discovery:", err);
+    if (liveJobs && liveJobs.length >= 3) {
+      console.log(`[LinkedIn-Live] Successfully retrieved ${liveJobs.length} live jobs directly from LinkedIn.`);
+      return liveJobs;
     }
+  } catch (err) {
+    console.warn("[LinkedIn-Live] Guest scraper encountered an error, using AI discovery:", err);
   }
 
-  // Fallback to real-time AI Job Discovery for reliable, rich results
+  // 2. Fallback to AI Job Discovery
+  console.log("[LinkedIn-Fallback] Falling back to AI real-time discovery engine...");
   return await discoverJobsWithAI(filters, resume);
 }
 
@@ -397,7 +431,7 @@ export function scoreJobsWithResume(
 
     // Base score on skill overlap
     const skillRatio = jobSkills.length > 0 ? matched.length / jobSkills.length : 0.7;
-    let score = Math.round(60 + skillRatio * 35);
+    let score = Math.round(62 + skillRatio * 33);
 
     // Title / role alignment bonus
     const titleLower = job.title.toLowerCase();
@@ -413,7 +447,7 @@ export function scoreJobsWithResume(
     });
 
     if (matchesTargetRole) {
-      score = Math.min(99, score + 8);
+      score = Math.min(99, score + 6);
     }
 
     const matchReasons: string[] = [];

@@ -980,8 +980,8 @@ export function JobMatcherClient() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
                         >
-                          <span>Company Portal</span>
-                          <Globe className="h-3.5 w-3.5 text-slate-400" />
+                          <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                          <span>Company Profile</span>
                         </a>
                       )}
 
@@ -991,7 +991,7 @@ export function JobMatcherClient() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f4c81] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0a365c] hover:shadow"
                       >
-                        <span>Direct Apply on LinkedIn</span>
+                        <span>Apply on LinkedIn</span>
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     </div>
