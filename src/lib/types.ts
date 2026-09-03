@@ -67,6 +67,7 @@ export interface JobListing {
   posted_date: string;
   description: string;
   apply_url: string;
+  company_apply_url?: string;
   skills_required: string[];
   experience_level?: string;
   match_score?: number; // 0 to 100
@@ -77,6 +78,7 @@ export interface JobListing {
 export interface JobSearchFilters {
   keywords: string;
   location: string;
+  locations?: string[];
   workplace_type: "all" | "remote" | "hybrid" | "onsite";
   date_posted: "all" | "past_24h" | "past_week" | "past_month";
   experience_level: "all" | "entry" | "mid" | "senior";

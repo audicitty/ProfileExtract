@@ -21,38 +21,53 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
-  RotateCcw,
-  Zap,
   TrendingUp,
   Award,
   ChevronDown,
   ChevronUp,
+  Check,
+  Globe,
+  Compass,
 } from "lucide-react";
 
-const SAMPLE_RESUME_TEXT = `Alex Morgan
-Senior Full Stack Engineer | San Francisco, CA | alex.morgan@example.com | (555) 234-5678
+const INDIAN_IT_CITIES = [
+  { id: "bangalore", name: "Bangalore", label: "Bangalore (Bengaluru)", hub: "South" },
+  { id: "gurgaon", name: "Gurgaon", label: "Gurgaon (Gurugram)", hub: "NCR" },
+  { id: "delhi", name: "Delhi / NCR", label: "Delhi / NCR", hub: "NCR" },
+  { id: "noida", name: "Noida", label: "Noida", hub: "NCR" },
+  { id: "chennai", name: "Chennai", label: "Chennai", hub: "South" },
+  { id: "jaipur", name: "Jaipur", label: "Jaipur", hub: "North" },
+  { id: "indore", name: "Indore", label: "Indore", hub: "Central" },
+  { id: "hyderabad", name: "Hyderabad", label: "Hyderabad", hub: "South" },
+  { id: "pune", name: "Pune", label: "Pune", hub: "West" },
+  { id: "mumbai", name: "Mumbai", label: "Mumbai", hub: "West" },
+  { id: "remote_india", name: "Remote (India)", label: "Remote (India)", hub: "All" },
+];
+
+const SAMPLE_RESUME_TEXT = `Divyanshu Bansal
+Full Stack Engineer | Bangalore, India | divyanshu.bansal@example.com | +91 98765 43210
 
 Summary:
-Results-driven Full Stack Engineer with 6+ years of experience designing and scaling high-throughput web applications, microservices, and modern user interfaces. Proven expertise in TypeScript, React, Next.js, Node.js, and PostgreSQL. Experienced in cloud deployments (AWS, Docker), REST/GraphQL APIs, and high-velocity product execution.
+Energetic and results-driven Full Stack Engineer with 3+ years of experience building responsive web applications, scalable backend microservices, and high-performance databases. Proficient in TypeScript, React, Next.js, Node.js, Express, PostgreSQL, and AWS. Passionate about shipping robust features, clean code, and intuitive user experiences.
 
 Core Technical Skills:
-- Languages & Frontend: TypeScript, JavaScript, React.js, Next.js, Redux Toolkit, Tailwind CSS, HTML5/CSS3
-- Backend & Systems: Node.js, Express, NestJS, Python, REST APIs, GraphQL, tRPC
-- Databases & Storage: PostgreSQL, Redis, Supabase, Prisma, Drizzle ORM
-- Cloud & DevOps: AWS (S3, ECS, Lambda), Docker, CI/CD GitHub Actions, Vercel
+- Languages & Frontend: TypeScript, JavaScript, React.js, Next.js, Redux, Tailwind CSS, HTML5/CSS3
+- Backend & Frameworks: Node.js, Express.js, RESTful APIs, GraphQL, Python
+- Databases: PostgreSQL, MongoDB, Redis, Drizzle ORM, Prisma
+- Cloud & Tools: AWS (EC2, S3), Docker, Git, GitHub Actions, CI/CD, Postman
 
 Professional Experience:
-Senior Full Stack Developer | Acme Tech Inc. | Jan 2022 - Present
-- Architected and shipped core SaaS features serving 200,000+ monthly active users using Next.js 14 and Node.js microservices.
-- Optimized database query performance and introduced Redis caching, reducing p99 API latency by 42%.
-- Mentored junior engineers, established TypeScript code quality standards, and spearheaded automated CI/CD pipelines.
+Full Stack Software Developer | TechInnovate Solutions | Jan 2023 - Present
+- Engineered high-traffic customer-facing web modules using Next.js and TypeScript, improving page load speed by 35%.
+- Designed and maintained REST APIs in Node.js and PostgreSQL handling 50,000+ daily requests.
+- Integrated automated CI/CD deployment pipelines using GitHub Actions and Docker.
 
-Full Stack Software Engineer | Horizon Cloud Solutions | Aug 2019 - Dec 2021
-- Developed interactive web dashboards in React and TypeScript with real-time WebSocket data updates.
-- Designed relational database schemas in PostgreSQL and built secure authentication with OAuth2.
+Software Engineer Intern | CloudMatrix Labs | Jun 2022 - Dec 2022
+- Developed interactive UI dashboards using React, Tailwind CSS, and Chart.js.
+- Implemented JWT authentication and role-based access control.
 
 Education:
-B.S. in Computer Science | University of California, Berkeley | 2015 - 2019`;
+B.Tech in Computer Science and Engineering | 2019 - 2023`;
 
 export function JobMatcherClient() {
   // Resume Input State
@@ -63,13 +78,23 @@ export function JobMatcherClient() {
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [parsedResume, setParsedResume] = useState<ParsedResume | null>(null);
 
+  // Multi-Location State: default to user's top IT cities
+  const [selectedCities, setSelectedCities] = useState<string[]>([
+    "Bangalore",
+    "Gurgaon",
+    "Noida",
+    "Delhi / NCR",
+  ]);
+  const [customLocationInput, setCustomLocationInput] = useState<string>("");
+
   // Filters State
   const [filters, setFilters] = useState<JobSearchFilters>({
-    keywords: "Senior Full Stack Engineer",
-    location: "United States",
+    keywords: "Full Stack Engineer",
+    location: "Bangalore, Gurgaon, Noida",
+    locations: ["Bangalore", "Gurgaon", "Noida", "Delhi / NCR"],
     workplace_type: "all",
     date_posted: "past_24h",
-    experience_level: "senior",
+    experience_level: "mid",
   });
 
   // Jobs Search State
@@ -78,6 +103,55 @@ export function JobMatcherClient() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+
+  // Toggle single city selection
+  const toggleCity = (cityName: string) => {
+    setSelectedCities((prev) => {
+      let updated: string[];
+      if (prev.includes(cityName)) {
+        updated = prev.filter((c) => c !== cityName);
+        if (updated.length === 0) updated = [cityName]; // maintain at least one
+      } else {
+        updated = [...prev, cityName];
+      }
+      return updated;
+    });
+  };
+
+  // Presets
+  const handleSelectAllFocusCities = () => {
+    setSelectedCities([
+      "Bangalore",
+      "Gurgaon",
+      "Delhi / NCR",
+      "Chennai",
+      "Jaipur",
+      "Indore",
+      "Noida",
+    ]);
+  };
+
+  const handleSelectNcr = () => {
+    setSelectedCities(["Gurgaon", "Delhi / NCR", "Noida"]);
+  };
+
+  const handleSelectSouth = () => {
+    setSelectedCities(["Bangalore", "Chennai", "Hyderabad"]);
+  };
+
+  const handleSelectRemote = () => {
+    setSelectedCities(["Remote (India)"]);
+  };
+
+  // Add custom typed city
+  const handleAddCustomCity = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = customLocationInput.trim();
+    if (trimmed && !selectedCities.includes(trimmed)) {
+      setSelectedCities((prev) => [...prev, trimmed]);
+      setCustomLocationInput("");
+    }
+  };
 
   // Load sample resume for instant 1-click testing
   const handleLoadSample = () => {
@@ -169,7 +243,8 @@ export function JobMatcherClient() {
         ...filters,
         keywords: defaultKeyword,
         experience_level: defaultExp,
-        location: parsed.location ? parsed.location : filters.location,
+        locations: selectedCities,
+        location: selectedCities.join(", "),
       };
 
       setFilters(updatedFilters);
@@ -193,12 +268,18 @@ export function JobMatcherClient() {
     setSearchError(null);
     setHasSearched(true);
 
+    const payloadFilters = {
+      ...searchFilters,
+      locations: selectedCities,
+      location: selectedCities.join(", "),
+    };
+
     try {
       const res = await fetch("/api/jobs/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          filters: searchFilters,
+          filters: payloadFilters,
           resumeProfile,
         }),
       });
@@ -220,7 +301,14 @@ export function JobMatcherClient() {
 
   const handleFilterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    executeJobSearch(filters, parsedResume);
+    executeJobSearch(
+      {
+        ...filters,
+        locations: selectedCities,
+        location: selectedCities.join(", "),
+      },
+      parsedResume
+    );
   };
 
   const toggleJobExpand = (id: string) => {
@@ -241,7 +329,7 @@ export function JobMatcherClient() {
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            Scan your resume, filter active LinkedIn job postings with live location and workplace options, view AI match scores, and apply directly.
+            Scan your resume, filter active tech jobs in India (Bangalore, Gurgaon, Delhi, Noida, Chennai, Jaipur, Indore), view AI fit scores, and apply directly.
           </p>
         </div>
 
@@ -323,7 +411,7 @@ export function JobMatcherClient() {
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
               placeholder="Paste your full resume text or paste key work experience, skills, and summary here..."
-              rows={6}
+              rows={5}
               disabled={scanningResume}
               className="w-full rounded-lg border border-slate-300 p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81] disabled:bg-slate-50 font-mono"
             />
@@ -454,7 +542,12 @@ export function JobMatcherClient() {
                     key={idx}
                     type="button"
                     onClick={() => {
-                      const updated = { ...filters, keywords: role };
+                      const updated = {
+                        ...filters,
+                        keywords: role,
+                        locations: selectedCities,
+                        location: selectedCities.join(", "),
+                      };
                       setFilters(updated);
                       executeJobSearch(updated, parsedResume);
                     }}
@@ -469,25 +562,127 @@ export function JobMatcherClient() {
         )}
       </div>
 
-      {/* Step 2: Search Filters Toolbar */}
+      {/* Step 2: Advanced Search Filters Toolbar */}
       <form
         onSubmit={handleFilterSubmit}
-        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4"
+        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-6"
       >
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0f4c81] text-xs font-bold text-white">
             2
           </span>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">
-            Refine Job Search Filters
+            Refine Job Search &amp; Location Filters
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* LOCATION MULTI-SELECT CARD */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-[#0f4c81]" />
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                Target IT Cities in India (Select Multiple)
+              </label>
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-[#0f4c81]">
+                {selectedCities.length} Selected
+              </span>
+            </div>
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="text-slate-400">Presets:</span>
+              <button
+                type="button"
+                onClick={handleSelectAllFocusCities}
+                className="rounded bg-white px-2 py-1 font-medium text-slate-700 border border-slate-200 hover:border-slate-300 transition"
+              >
+                All 7 Core Cities
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectNcr}
+                className="rounded bg-white px-2 py-1 font-medium text-slate-700 border border-slate-200 hover:border-slate-300 transition"
+              >
+                NCR
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectSouth}
+                className="rounded bg-white px-2 py-1 font-medium text-slate-700 border border-slate-200 hover:border-slate-300 transition"
+              >
+                South Hubs
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectRemote}
+                className="rounded bg-white px-2 py-1 font-medium text-slate-700 border border-slate-200 hover:border-slate-300 transition"
+              >
+                Remote Only
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Multi-Select City Chips */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 pt-1">
+            {INDIAN_IT_CITIES.map((city) => {
+              const isSelected = selectedCities.includes(city.name);
+              return (
+                <button
+                  key={city.id}
+                  type="button"
+                  onClick={() => toggleCity(city.name)}
+                  className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium transition cursor-pointer text-left ${
+                    isSelected
+                      ? "border-[#0f4c81] bg-[#0f4c81] text-white shadow-xs"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className="truncate">{city.label}</span>
+                  {isSelected ? (
+                    <Check className="h-3.5 w-3.5 text-white shrink-0 ml-1" />
+                  ) : (
+                    <div className="h-3.5 w-3.5 rounded border border-slate-300 shrink-0 ml-1" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Custom City Addition */}
+          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs">
+            <div className="text-slate-500 font-medium whitespace-nowrap">
+              Add custom location:
+            </div>
+            <div className="flex items-center gap-1.5 flex-1 max-w-sm">
+              <input
+                type="text"
+                value={customLocationInput}
+                onChange={(e) => setCustomLocationInput(e.target.value)}
+                placeholder="e.g. Ahmedabad, Kolkata, Chandigarh"
+                className="w-full rounded border border-slate-300 py-1.5 px-2.5 text-xs text-slate-900 bg-white focus:border-[#0f4c81] focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleAddCustomCity}
+                disabled={!customLocationInput.trim()}
+                className="rounded bg-slate-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-900 disabled:opacity-50 transition"
+              >
+                Add
+              </button>
+            </div>
+            <div className="text-[11px] text-slate-500 italic">
+              Active: {selectedCities.join(", ")}
+            </div>
+          </div>
+        </div>
+
+        {/* ROLE, WORKPLACE, DATE, LEVEL FILTERS */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Target Role / Keywords */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Role or Keywords
+              Job Title or Keywords
             </label>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
@@ -497,26 +692,7 @@ export function JobMatcherClient() {
                 type="text"
                 value={filters.keywords}
                 onChange={(e) => setFilters({ ...filters, keywords: e.target.value })}
-                placeholder="e.g. Senior Frontend Engineer"
-                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs text-slate-900 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81]"
-              />
-            </div>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Location
-            </label>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
-                <MapPin className="h-3.5 w-3.5" />
-              </div>
-              <input
-                type="text"
-                value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                placeholder="e.g. San Francisco, CA or Remote"
+                placeholder="e.g. Full Stack Developer"
                 className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-xs text-slate-900 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81]"
               />
             </div>
@@ -525,7 +701,7 @@ export function JobMatcherClient() {
           {/* Workplace Type */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Workplace Type
+              Workplace Mode
             </label>
             <select
               value={filters.workplace_type}
@@ -537,7 +713,7 @@ export function JobMatcherClient() {
               }
               className="w-full rounded-lg border border-slate-300 py-2 px-3 text-xs text-slate-900 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81]"
             >
-              <option value="all">All (Remote + Hybrid + On-site)</option>
+              <option value="all">All Modes (Remote + Hybrid + On-site)</option>
               <option value="remote">Remote Only</option>
               <option value="hybrid">Hybrid</option>
               <option value="onsite">On-site</option>
@@ -560,7 +736,7 @@ export function JobMatcherClient() {
               className="w-full rounded-lg border border-slate-300 py-2 px-3 text-xs text-slate-900 focus:border-[#0f4c81] focus:outline-none focus:ring-1 focus:ring-[#0f4c81]"
             >
               <option value="past_24h">Latest (Past 24 Hours)</option>
-              <option value="past_week">Past Week</option>
+              <option value="past_week">Past Week (7 Days)</option>
               <option value="past_month">Past Month</option>
               <option value="all">Anytime</option>
             </select>
@@ -572,24 +748,24 @@ export function JobMatcherClient() {
           <div className="flex items-center gap-2 text-[11px] text-slate-500">
             <Clock className="h-3.5 w-3.5 text-blue-600" />
             <span>
-              Scraping mode: Active LinkedIn listings via Bright Data &amp; AI fit evaluator
+              Searching verified openings across: <strong>{selectedCities.join(", ")}</strong>
             </span>
           </div>
 
           <button
             type="submit"
             disabled={searchingJobs}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0f4c81] px-5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0a365c] disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0f4c81] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0a365c] disabled:opacity-50"
           >
             {searchingJobs ? (
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                <span>Searching LinkedIn Jobs...</span>
+                <span>Finding Openings...</span>
               </>
             ) : (
               <>
                 <Filter className="h-3.5 w-3.5" />
-                <span>Apply Filters &amp; Find Jobs</span>
+                <span>Search &amp; Match Jobs ({selectedCities.length} Cities)</span>
               </>
             )}
           </button>
@@ -615,10 +791,10 @@ export function JobMatcherClient() {
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm space-y-3">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#0f4c81] border-t-transparent" />
           <h3 className="text-base font-bold text-slate-800">
-            Searching &amp; Matching LinkedIn Jobs...
+            Scanning Openings in {selectedCities.slice(0, 3).join(", ")}...
           </h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
-            Pulling active listings for &ldquo;{filters.keywords}&rdquo; in {filters.location} and computing your AI fit score.
+            Pulling active listings for &ldquo;{filters.keywords}&rdquo; and matching against your background.
           </p>
         </div>
       )}
@@ -628,7 +804,7 @@ export function JobMatcherClient() {
           <Briefcase className="h-8 w-8 text-slate-400 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No Jobs Found</h3>
           <p className="text-xs text-slate-500">
-            Try broadening your keywords or setting the location to &ldquo;Remote&rdquo; or &ldquo;United States&rdquo;.
+            Try broadening your keywords or selecting additional IT cities above.
           </p>
         </div>
       )}
@@ -640,7 +816,7 @@ export function JobMatcherClient() {
             <div className="flex items-center gap-2 text-xs">
               <TrendingUp className="h-4 w-4 text-emerald-600" />
               <span className="font-bold text-slate-900">
-                Found {jobs.length} Active LinkedIn Jobs
+                Found {jobs.length} Verified Job Openings
               </span>
               {parsedResume && (
                 <span className="text-slate-500">
@@ -655,7 +831,7 @@ export function JobMatcherClient() {
                 className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 transition"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Export CSV</span>
+                <span>Export CSV ({jobs.length})</span>
               </button>
             </div>
           </div>
@@ -706,7 +882,7 @@ export function JobMatcherClient() {
                         </div>
                         <div className="flex items-center gap-1">
                           <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                          <span>{job.location}</span>
+                          <span className="font-medium text-slate-700">{job.location}</span>
                         </div>
                         {job.salary && (
                           <div className="flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
@@ -761,7 +937,7 @@ export function JobMatcherClient() {
                       </ul>
                       {job.missing_skills && job.missing_skills.length > 0 && (
                         <div className="text-[11px] text-amber-700 pt-1">
-                          <strong>Skills to brush up on:</strong> {job.missing_skills.slice(0, 4).join(", ")}
+                          <strong>Skills to highlight / brush up:</strong> {job.missing_skills.slice(0, 4).join(", ")}
                         </div>
                       )}
                     </div>
@@ -777,7 +953,7 @@ export function JobMatcherClient() {
                         <button
                           type="button"
                           onClick={() => toggleJobExpand(job.id)}
-                          className="mt-1 text-[11px] font-semibold text-[#0f4c81] hover:underline flex items-center gap-1"
+                          className="mt-1 text-[11px] font-semibold text-[#0f4c81] hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <span>{isExpanded ? "Show Less" : "Read Full Description"}</span>
                           {isExpanded ? (
@@ -790,21 +966,35 @@ export function JobMatcherClient() {
                     </div>
                   )}
 
-                  {/* Card Bottom: Direct Apply Button */}
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <div className="text-[11px] text-slate-400">
-                      Verified LinkedIn Opportunity
+                  {/* Card Bottom: Direct Action Links */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-100 pt-3">
+                    <div className="text-[11px] text-slate-500">
+                      Verified Opportunity &bull; Direct links to active hiring post
                     </div>
 
-                    <a
-                      href={job.apply_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f4c81] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0a365c] hover:shadow"
-                    >
-                      <span>Direct Apply on LinkedIn</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                    <div className="flex items-center gap-2">
+                      {job.company_apply_url && (
+                        <a
+                          href={job.company_apply_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-slate-900"
+                        >
+                          <span>Company Portal</span>
+                          <Globe className="h-3.5 w-3.5 text-slate-400" />
+                        </a>
+                      )}
+
+                      <a
+                        href={job.apply_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#0f4c81] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#0a365c] hover:shadow"
+                      >
+                        <span>Direct Apply on LinkedIn</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
                   </div>
                 </div>
               );

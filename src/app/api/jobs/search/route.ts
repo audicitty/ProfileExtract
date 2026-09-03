@@ -33,9 +33,14 @@ export async function POST(req: NextRequest) {
 
     const { filters, resumeProfile } = body || {};
 
+    const rawLocations = Array.isArray(filters?.locations) && filters.locations.length > 0
+      ? filters.locations.map((l: unknown) => String(l).trim()).filter(Boolean)
+      : filters?.location ? [String(filters.location).trim()] : ["Bangalore", "Gurgaon", "Noida"];
+
     const cleanFilters: JobSearchFilters = {
       keywords: String(filters?.keywords || "").trim() || "Software Engineer",
-      location: String(filters?.location || "").trim() || "Remote",
+      location: rawLocations.join(", "),
+      locations: rawLocations,
       workplace_type: ["all", "remote", "hybrid", "onsite"].includes(filters?.workplace_type)
         ? filters.workplace_type
         : "all",
