@@ -4,20 +4,15 @@ A full-stack, production-ready AI career intelligence platform built with **Next
 
 ---
 
-## Three Core Features
+## Two Core Features
 
-### 1. LinkedIn Text Extractor (`/dashboard`)
-- Copy raw visible text directly from any LinkedIn profile (`Ctrl+A` -> `Ctrl+C`).
-- Gemini AI normalizes the text into structured JSON fields (Contact, Headline, Experience, Education, Projects, Certifications, Skills).
-- One-click RFC 4180 client-side CSV download.
-- Zero DB persistence for profile text (completely stateless & privacy-focused).
-
-### 2. LinkedIn URL Profile Extractor (`/url-extract`)
+### 1. LinkedIn URL Profile Extractor (`/url-extract`)
 - Provide any public LinkedIn profile URL (e.g. `https://www.linkedin.com/in/username`).
 - Scrapes live profile data via Bright Data Scraper API (`gd_l1viktl72bvl7bjuj0`).
 - Normalizes data and enriches missing technical/domain skills using Gemini AI.
+- One-click RFC 4180 client-side CSV download.
 
-### 3. AI Resume Scanner & LinkedIn Job Matcher (`/jobs`)
+### 2. AI Resume Scanner & LinkedIn Job Matcher (`/jobs`)
 - Upload a **PDF resume** or paste resume text.
 - Gemini AI scans qualifications, seniority level, core tech stack, and target career trajectory roles.
 - **Indian IT Hubs Multi-Location Filtering**:

@@ -40,12 +40,6 @@ export function Navbar() {
           ) : session?.user ? (
             <>
               <Link
-                href="/dashboard"
-                className="hidden sm:inline-flex text-sm font-medium text-slate-600 hover:text-slate-900 transition"
-              >
-                Text Extractor
-              </Link>
-              <Link
                 href="/url-extract"
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
               >

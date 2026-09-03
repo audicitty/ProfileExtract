@@ -6,23 +6,16 @@
 
 ## 1. Core Product Capabilities
 
-The app has 3 primary workflows:
+The platform focuses on 2 core workflows:
 
-### 1. LinkedIn Text Profile Extractor (`/dashboard`)
-- **Route**: `src/app/dashboard/page.tsx` | Component: `src/components/DashboardClient.tsx`
-- **Backend**: `src/app/api/extract/route.ts` & `src/lib/gemini.ts`
-- **Function**: Users paste raw text copied directly from any LinkedIn profile (`Ctrl+A` -> `Ctrl+C`).
-- **AI Processing**: Google Gemini (`gemini-2.5-flash`) extracts structured fields using strict `responseSchema` (Contact, Headline, Experience, Education, Projects, Certifications, Skills).
-- **Stateless**: Zero database writes for profile data; lives purely in client session memory.
-- **Export**: Generates RFC 4180 flat single-row CSV ready for Excel, Google Sheets, or CRM databases (`src/lib/csv.ts`).
-
-### 2. LinkedIn URL Profile Extractor (`/url-extract`)
+### 1. LinkedIn URL Profile Extractor (`/url-extract`)
 - **Route**: `src/app/url-extract/page.tsx` | Component: `src/components/UrlExtractClient.tsx`
 - **Backend**: `src/app/api/extract-url/route.ts` & `src/lib/brightdata.ts`
-- **Function**: Users submit a public LinkedIn profile URL (e.g. `https://www.linkedin.com/in/username`).
-- **Scraper**: Triggers Bright Data scraper API (`gd_l1viktl72bvl7bjuj0`), polls snapshot progress, and normalizes fields with rule-based fallback and automated Gemini AI skill enrichment.
+- **Function**: Users submit any public LinkedIn profile URL (e.g. `https://www.linkedin.com/in/username`).
+- **Scraper**: Triggers Bright Data scraper API (`gd_l1viktl72bvl7bjuj0`), polls snapshot progress, and normalizes fields with automated Gemini AI skill enrichment.
+- **Export**: Generates RFC 4180 flat single-row CSV ready for Excel, Google Sheets, or CRM databases (`src/lib/csv.ts`).
 
-### 3. AI Resume Scanner & LinkedIn Job Matcher (`/jobs`)
+### 2. AI Resume Scanner & LinkedIn Job Matcher (`/jobs`)
 - **Route**: `src/app/jobs/page.tsx` | Component: `src/components/JobMatcherClient.tsx`
 - **Backend**: 
   - Resume parser: `src/app/api/resume/scan/route.ts` & `src/lib/resume.ts`

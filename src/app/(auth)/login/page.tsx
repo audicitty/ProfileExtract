@@ -37,7 +37,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/url-extract");
       router.refresh();
     } catch {
       setError("Invalid email or password. Please check your credentials.");

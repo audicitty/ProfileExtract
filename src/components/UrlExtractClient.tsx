@@ -107,12 +107,12 @@ export function UrlExtractClient() {
           </p>
         </div>
 
-        {/* Switch to Text Extractor */}
+        {/* Switch to Job Matcher */}
         <Link
-          href="/dashboard"
+          href="/jobs"
           className="inline-flex items-center gap-1.5 self-start rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
         >
-          <span>Use Text Extractor</span>
+          <span>Job Matcher AI</span>
           <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
         </Link>
       </div>
