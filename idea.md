@@ -427,3 +427,63 @@ Not actionable until §6 and §7 have been running long enough to produce volume
 **Practical constraint:** none of SFT / DPO / RLVR is possible on the Gemini API. Vertex AI offers supervised tuning on Flash, but no preference or RL training. Anything past SFT means moving part of the pipeline to open weights (Qwen 3, Llama) and renting GPUs.
 
 **Honest positioning note:** for a solo developer, competing on model training against funded teams is the hard version of this. The leverage is in the eval harness, the verifier suite, and the outcome data — all of which are worth building on their own merits, and none of which require training anything.
+
+---
+
+# Part III — Output Quality
+
+---
+
+## 10. Improving Match Quality
+
+### 10.1 The bottleneck is the input data, not the model
+
+An audit of `src/lib/jobs.ts` found that the fit score is close to meaningless today, for reasons no model upgrade can fix. These are logged as tech debt in CLAUDE.md §7 (items 5–7):
+
+**Job descriptions are not real.** [`src/lib/jobs.ts:240`](src/lib/jobs.ts#L240) sets `description` to a hardcoded template — *"Active job opening at {company} in {location}…"*. The LinkedIn guest **search** endpoint returns only title, company, and location, so no requirements text exists anywhere in the system.
+
+**`skills_required` is guessed from the job title.** `inferSkillsFromTitle` uses hardcoded buckets ("frontend" ⇒ React/TypeScript/Tailwind/Next.js). Worse, [`jobs.ts:93`](src/lib/jobs.ts#L93) seeds those skills with the candidate's own:
+
+```ts
+candidateSkills.slice(0, 4).forEach((s) => baseSkills.add(s));
+```
+
+Every job is therefore constructed to require up to four skills the candidate definitionally has, then scored on how many of them they match. **The score is matching the resume against itself.**
+
+**The score cannot go below 62.** `62 + skillRatio * 33` compresses everything into 62–95, and an empty skill list defaults `skillRatio` to `0.7`. Separately, [`jobs.ts:421`](src/lib/jobs.ts#L421) matches skills by bidirectional substring containment, so "Java" matches "JavaScript" and "R" matches "React".
+
+### 10.2 Fix the input first — no new AI required
+
+LinkedIn exposes a **per-job** guest endpoint (`jobs-guest/jobs/api/jobPosting/{id}`) returning the posting body. **Needs verifying** that it still works and is not aggressively rate-limited — but if it does, fetching real descriptions is the single highest-leverage change in the application, and the prerequisite for everything in §10.3.
+
+Alongside it:
+
+- Remove the candidate-skill seeding from `inferSkillsFromTitle` (kill the circularity)
+- Replace substring containment with token-boundary matching
+- Let the score use its full range instead of flooring at 62
+- Keep `inferSkillsFromTitle` only as a fallback for when a description fetch fails
+
+### 10.3 AI techniques that help once descriptions are real
+
+| # | Technique | Why it helps here |
+|---|---|---|
+| 1 | **Embeddings for semantic matching** (`gemini-embedding-001`) | Embed resume and each JD, use cosine similarity as a scoring feature alongside skill overlap. Solves "React" / "React.js" / "ReactJS" and real semantic equivalence that no string match catches. **This is pairwise similarity, not RAG** — no vector store, no corpus, distinct from what §2.3 defers. |
+| 2 | **A skill taxonomy** (ESCO, O\*NET, or Lightcast Open Skills) | Free, structured, canonical skills with alias sets. Pair with #1: taxonomy for known aliases (deterministic, auditable), embeddings for the long tail. A data asset, not a model — it compounds. |
+| 3 | **Retrieve-then-rerank** | Cheap filter over all results, then one LLM call reranking the top ~25 with full descriptions. Standard IR pattern, big visible gain — and it bounds how many description fetches are needed, which answers the rate-limit risk in §10.2. |
+| 4 | **Thinking budget on judgment calls** | Enable it for fit scoring and the ATS audit; leave it off for straight extraction where it only adds latency. Roughly a config change for a real gain. |
+| 5 | **Split the mega-schema** | `resumeResponseSchema` asks for extraction *and* judgment (seniority, target roles, search keywords) in one call. Separating fact from inference usually improves both, and allows different temperatures and models per task. |
+| 6 | **Rubric anchors** | Wherever a model emits a score, define what 80 vs 60 means rather than asking for a number. Same principle that moved the ATS score into TypeScript in §1.1. |
+| 7 | **Validation and repair loop** | Validate output against the schema plus business rules; on failure, retry once with the error fed back. Cheap reliability gain. |
+
+### 10.4 What will not help
+
+- **A bigger model everywhere** — marginal gain, real cost, and it does not touch any problem in §10.1
+- **Agent frameworks** (LangChain and similar) — complexity without quality
+- **Fine-tuning right now** — no data yet; that is §9
+- **RAG for matching** — already deferred in §2.3, and #1 above is the cheaper answer
+
+### 10.5 The ordering constraint
+
+None of §10.3 can be evaluated without §6. Today a change to the scoring formula is indistinguishable from a change to the prompt, which is indistinguishable from luck.
+
+**Build the eval harness before the improvements, not after** — otherwise this section becomes a list of changes nobody can prove helped.
