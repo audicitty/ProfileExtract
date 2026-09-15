@@ -28,49 +28,76 @@ Two new capabilities planned on top of the existing URL Extractor and Job Matche
 
 ## 1. Resume Enhancer (`/enhance`)
 
-### 1.1 The Core Design Decision — Two Layers
+### 1.1 The Core Design Decision — Measure, Don't Aggregate
 
-A single "rate this resume 0–100" LLM call produces unstable output. The audit is split in two, and the score is assembled deterministically from both layers' findings.
+ATS-friendliness is an **empirical question with a ground truth**: does a real parser extract the fields correctly? Most tools in this market treat it as an editorial question instead — aggregating advice from blog posts and scoring against a proxy they invented. So does the obvious shortcut of merging several open-source "resume enhancer" prompt packs into one large instruction file.
 
-#### Layer 1 — Deterministic checks (pure TypeScript, no model)
+Both approaches lose for the same reason: they collect *claims about* ATS behaviour rather than measuring it. A merged mega-prompt additionally makes things worse on its own terms — instruction adherence degrades as rule count grows, the sources contradict each other on contested points (one page vs two, summary vs objective, heading style), and a prompt cannot detect a two-column layout or a scanned image no matter how it is worded.
 
-These decide whether an ATS can parse the file at all:
+**The approach here inverts that: build a parser test bench, and derive the checks and their weights from measurement.**
 
-- **Text layer present?** Is the PDF real text, or a scanned image / text rendered as graphics? This is the single biggest real-world ATS failure.
-- **Multi-column or table layout detection.** Most ATS parsers linearize columns and scramble the reading order.
-- **Contact block parseable** — email, phone, location via regex.
-- **Standard section headings present** — "Experience", not "Where I've Made Impact".
-- **Date format consistency** across entries.
-- **Word count, bullet density, non-ASCII glyph bullets.**
+#### The parser bench
 
-#### Layer 2 — LLM checks (Gemini, schema-enforced)
+Two or three open-source resume parsers plus a document-extraction stack, running locally, acting as the test oracle. Free-tier commercial parsing APIs are worth adding where quota allows.
 
-Content quality only:
+#### The adversarial fixture matrix
 
-- Weak/passive verbs
-- Unquantified bullets (no metric, no outcome)
-- Buzzword padding
-- Tense inconsistency (present tense on past roles)
-- Summary strength
-- Keyword gaps versus a target role or pasted job description
+The key piece. Take one resume's content and produce ~30 variants, each differing on **exactly one** dimension:
+
+| Dimension | Variants |
+|---|---|
+| Column layout | single-column vs two-column |
+| Text encoding | real text layer vs scanned image |
+| Structure | tables vs plain paragraphs |
+| Headings | standard ("Experience") vs creative ("Where I've Made Impact") |
+| Bullets | glyph bullets vs hyphens |
+| Contact placement | PDF header/footer vs document body |
+| Date format | `MM/YYYY` vs `Month YYYY` vs mixed |
+
+Content is held constant, so any difference in parse quality is attributable to that single variable.
+
+#### What the matrix produces
+
+Run `fixture × parser → field-extraction accuracy`. **The delta each variation causes is the empirical severity of that check.**
+
+This is what makes the score defensible. The scoring rubric needs weights; without the bench those weights are guesses. With it, *"−12 for two-column"* means a measured ~40% field-extraction drop, not that a blog post disapproved.
+
+It also settles every contested item empirically. Five sources disagreeing about summary-vs-objective stops being a judgement call — either it measurably affects parsing, or it does not and gets dropped.
+
+#### The division of labour
+
+| Layer | Scope | Basis |
+|---|---|---|
+| **Parser bench** (TypeScript) | Everything structural — parseability, layout, headings, contact extraction, date consistency | Measured and weighted |
+| **LLM prompt** (Gemini, schema-enforced) | Only genuinely subjective content quality — weak/passive verbs, unquantified bullets, buzzword padding, tense drift, summary strength, keyword gaps vs. a target JD | Judgement |
+
+The prompt stays **short — roughly 400 words** — because the bench absorbs everything a prompt was never able to check. This is the opposite of the merge-everything instinct, and it is why it works.
 
 #### Scoring
 
-The model returns **findings and booleans**; it never returns the number. TypeScript applies a fixed weighted rubric. Result: reproducible and explainable — *"−12: three bullets have no metric."*
+The model returns **findings and booleans**; it never returns the number. TypeScript applies the bench-derived weights. Result: reproducible, explainable, and empirically grounded.
+
+#### Where public prompt packs still fit
+
+**Hypothesis generation only.** They are a free, fast list of candidate dimensions to add to the fixture matrix — worth about an hour of harvesting. Do not ship their prose, and do not trust their severity claims; the bench decides those.
+
+#### Honest caveat
+
+Open-source parsers are not Workday or Greenhouse. They are a proxy too — just a far better one than folklore. Two mitigations: run **multiple** parsers and trust only checks where they agree, and treat output as directional rather than exact. A check that breaks three independent parsers is almost certainly real; one that breaks a single parser may be that parser's quirk.
 
 ### 1.2 Known Gap — PDF Structure Extraction
 
-`parseResume` in `src/lib/resume.ts` currently hands the raw PDF to Gemini multimodally. That reads **content** fine but reveals nothing about **structure**, which is exactly what Layer 1 needs.
+`parseResume` in `src/lib/resume.ts` currently hands the raw PDF to Gemini multimodally. That reads **content** fine but reveals nothing about **structure**, which is exactly what the bench-derived checks need.
 
 **Required**: add `unpdf` or `pdfjs-dist` to get positioned text items, enabling column/table detection and text-layer verification.
 
-Without this, only Layer 2 is possible and the "ATS-friendly" claim is half-true.
+Without this, only the LLM layer is possible and the "ATS-friendly" claim is half-true.
 
 ### 1.3 Planned File Structure
 
 ```
-src/lib/resume-ats.ts              # Layer 1 — pure functions, easily unit-tested
-src/lib/resume-enhance.ts          # Layer 2 — Gemini call, mirrors resume.ts structure
+src/lib/resume-ats.ts              # bench-derived structural checks, pure functions
+src/lib/resume-enhance.ts          # LLM content layer, mirrors resume.ts structure
 src/app/api/resume/enhance/route.ts
 src/app/enhance/page.tsx           # auth-protected
 src/components/ResumeEnhancerClient.tsx
@@ -181,12 +208,15 @@ Things the chat route needs that no existing endpoint in this app has:
 | # | Work | Effort |
 |---|---|---|
 | 1 | Extract shared `ResumeIntake` component from `JobMatcherClient` | ~2h |
-| 2 | Layer 1 ATS checks + add `unpdf` + unit tests | 1 day |
-| 3 | Layer 2 Gemini audit + scoring rubric + `/enhance` UI | 2 days |
-| 4 | Context chat with streaming + tool-calling | 1–2 days |
-| 5 | *(Deferred)* pgvector + knowledge base — only if a real corpus materialises | 4–5 days |
+| 2 | **Parser bench + adversarial fixture matrix** (§1.1) — produces the check list *and* its weights | 1–2 days |
+| 3 | Structural checks in `resume-ats.ts` + add `unpdf` + unit tests | 1 day |
+| 4 | LLM content layer + scoring rubric (bench-derived weights) + `/enhance` UI | 2 days |
+| 5 | Context chat with streaming + tool-calling | 1–2 days |
+| 6 | *(Deferred)* pgvector + knowledge base — only if a real corpus materialises | 4–5 days |
 
-**Total for v1 (steps 1–4): roughly 4–5 days.**
+**Total for v1 (steps 1–5): roughly 5–7 days.**
+
+Step 2 is new and it gates step 4 — the scoring rubric cannot be weighted without it. It is also the step that produces the §8.1 verifier asset, so the cost is shared across the eval harness (§6) and the deferred RLVR track (§9) rather than being spent on the enhancer alone.
 
 ---
 
@@ -239,7 +269,7 @@ Sourcing: anonymised real resumes where consent allows, plus synthetic ones gene
 | Type | Used for | Cost | Stability |
 |---|---|---|---|
 | **Deterministic** | `ParsedResume` fields — skill-set precision/recall/F1, seniority accuracy, years-of-experience absolute error, contact-field exact match, valid-JSON rate | Free | Exact |
-| **Verifier** | ATS checks from §1.1 Layer 1 — does the output actually parse, are required keywords covered, does every bullet carry a metric | Free | Exact |
+| **Verifier** | Bench-derived ATS checks from §1.1 — does the output actually parse, are required keywords covered, does every bullet carry a metric | Free | Exact |
 | **LLM judge** | Only the genuinely subjective part: bullet rewrite quality, summary quality | Paid | Noisy — must be validated |
 
 Most of what matters here is deterministic. `ParsedResume` is a structured schema, so field-level scoring covers the majority of the surface without a judge at all. Reach for the judge last, not first.
@@ -377,13 +407,13 @@ Things that make the above materially more valuable for little extra effort.
 
 ### 8.1 Build the verifier suite once, use it three times
 
-The deterministic ATS checks from §1.1 Layer 1 serve as:
+The bench-derived structural checks from §1.1 serve as:
 
 1. A **product feature** (the enhancer's findings)
 2. An **eval grader** (§6.3)
 3. An **RLVR reward function** (§9)
 
-This is real leverage and the strongest argument for building Layer 1 properly rather than leaning on the model. Design it as pure, side-effect-free functions with no coupling to the request path.
+This is real leverage and the strongest argument for building the parser bench properly rather than leaning on the model. Design it as pure, side-effect-free functions with no coupling to the request path.
 
 ### 8.2 Outcome tracking — the signal nobody else has
 
