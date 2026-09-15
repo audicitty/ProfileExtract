@@ -21,18 +21,33 @@ Neither blocks Phases 1–6. Decide them before Phase 7.
 
 ### 0.2 What you need to have
 
-| Phase | New dependency | Account / external | Notes |
+**Phases 1–5 need no new credentials.** All six environment variables in `.env.local` (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `NEXT_PUBLIC_APP_URL`, `GOOGLE_GENERATIVE_AI_API_KEY`, `BRIGHTDATA_API_KEY`, `BRIGHTDATA_DATASET_ID`) are already set and cover everything through the shippable enhancer.
+
+#### Required
+
+| Phase | What | Why |
+|---|---|---|
+| 2 | **Billing enabled on the Gemini key** | A matrix run is *suites × models × fixtures* — 200 golden-set documents across the three-model fallback chain is ~600 calls per run, re-run after every Phase 6 change. Free-tier per-minute and per-day caps will throttle this, and `gemini-2.5-pro` is the most restricted of the three. Sort it **before** starting Phase 2, not mid-run. Check your key's current limits in AI Studio — the Phase 2 prompt makes me estimate total cost before the full matrix executes. |
+| 3 | **Python 3 + pip** | Local tooling, not an API. Most open-source resume parsers are Python, so the bench crosses a language boundary. Phase 3's step 1 confirms what's actually installable before committing to this. |
+| 3 | `unpdf` *or* `pdfjs-dist` | npm, decided in Phase 3 step 1 |
+
+#### Contingent — may never be needed
+
+| Phase | What | Trigger | Avoidable? |
 |---|---|---|---|
-| 1 | — | — | Uses existing LinkedIn guest endpoints |
-| 2 | — | — | `tsx` already present; cost is labelling time, not software |
-| 3 | `unpdf` *or* `pdfjs-dist` | Python 3 + pip (most OSS resume parsers are Python) | Messiest phase practically — see §3 risks |
-| 4 | — | — | Consumes Phase 3 output |
-| 5 | — | Existing Gemini key | — |
-| 6 | — | ESCO or O\*NET bulk download (free, registration) | Embeddings use the existing Gemini key |
-| 7 | — | — | — |
-| 8 | — | — | Drizzle migration; gated on §0.1 |
+| 1 | A proxy for LinkedIn fetches | Only if the per-job endpoint rate-limits or IP-blocks you | You already have Bright Data in the stack for exactly this — no new vendor |
+| 3 | Free-tier commercial parsing API | Only if you want a third parser opinion beyond the OSS ones | Optional; the agreement rule in `idea.md` §1.1 works with two |
+| 6 | **Lightcast Open Skills credentials** | Only if you pick Lightcast over ESCO or O\*NET | **Yes** — ESCO and O\*NET are free bulk downloads needing no API key. The Phase 6 prompt makes me name my pick and verify the licence first. |
+| 7 | **Upstash / Redis account** | Only if you rate-limit there rather than in Postgres | **Yes** — you already have Postgres. Redis is faster; Postgres adds no vendor. The Phase 7 prompt has me propose the approach before building. |
+| 9 | GPU rental + HuggingFace | Deferred training track | Far future; not a concern now |
+
+#### Nothing new
+
+Phases 4, 5, and 8 add no dependency or credential. Phase 8 is a Drizzle migration against the existing database, gated on §0.1.
 
 **Do not install anything not listed here without asking me first** — that rule is in every prompt below.
+
+> **Unrelated but credential-adjacent:** `CLAUDE.md` §7 item 1 — the Bright Data API key is hardcoded as a fallback in [src/lib/brightdata.ts:280](src/lib/brightdata.ts#L280) and has been in tracked source since commit `2838457`. The same key is in `.env.local`, so the fallback provides nothing but exposure. Worth rotating at Bright Data. Still logged as "do not fix until explicitly asked."
 
 ### 0.3 Standing guardrails (embedded in every prompt)
 
