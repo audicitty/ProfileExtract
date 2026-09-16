@@ -56,6 +56,21 @@ export interface ParsedResume {
   suggested_search_keywords: string[];
 }
 
+/**
+ * Where a listing's `skills_required` came from.
+ * - "posting": parsed from the real LinkedIn posting body.
+ * - "inferred": guessed from the job title because the posting body was unavailable.
+ */
+export type JobRequirementsSource = "posting" | "inferred";
+
+/**
+ * How much evidence the match score rests on.
+ * - "high": scored against requirements stated in the posting.
+ * - "medium": scored against requirements inferred from the title.
+ * - "low": no usable requirements data; scored on title / seniority only.
+ */
+export type JobMatchConfidence = "high" | "medium" | "low";
+
 export interface JobListing {
   id: string;
   title: string;
@@ -69,8 +84,14 @@ export interface JobListing {
   apply_url: string;
   company_apply_url?: string;
   skills_required: string[];
+  requirements_source?: JobRequirementsSource;
   experience_level?: string;
+  /** LinkedIn's own "Seniority level" criterion, present only when scraped from the posting. */
+  posting_seniority_level?: string;
+  /** LinkedIn's own "Employment type" criterion, present only when scraped from the posting. */
+  employment_type?: string;
   match_score?: number; // 0 to 100
+  match_confidence?: JobMatchConfidence;
   match_reasons?: string[];
   missing_skills?: string[];
 }
