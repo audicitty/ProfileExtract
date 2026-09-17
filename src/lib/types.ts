@@ -69,10 +69,23 @@ export interface JobListing {
   apply_url: string;
   company_apply_url?: string;
   skills_required: string[];
+  /**
+   * Where `skills_required` came from.
+   * "posting"  — parsed from the real job description body.
+   * "inferred" — guessed from the job title because the fetch failed or was skipped.
+   */
+  skills_source: "posting" | "inferred";
   experience_level?: string;
   match_score?: number; // 0 to 100
   match_reasons?: string[];
   missing_skills?: string[];
+  /**
+   * How much the score can be trusted.
+   * "high"   — scored against requirements parsed from the posting.
+   * "medium" — scored against skills inferred from the title.
+   * "low"    — no usable skills data; the score reflects title alignment only.
+   */
+  match_confidence?: "high" | "medium" | "low";
 }
 
 export interface JobSearchFilters {

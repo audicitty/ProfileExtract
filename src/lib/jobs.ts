@@ -1,5 +1,24 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { JobListing, JobSearchFilters, ParsedResume } from "./types";
+import {
+  FetchJobDescriptionsOptions,
+  JOB_DESCRIPTION_FETCH_LIMIT,
+  fetchJobDescriptions,
+  jobDescriptionCacheStats,
+} from "./job-descriptions";
+
+/** Share of the score carried by skill overlap. */
+export const SKILL_WEIGHT = 80;
+/** Share of the score carried by the job title matching a target role. */
+export const ROLE_WEIGHT = 20;
+/**
+ * Stand-in overlap for a job with no usable skills data.
+ *
+ * Low on purpose. The previous 0.7 default flattered every unscoreable job into
+ * the mid-90s; a job we cannot assess should rank below one we can and be
+ * labelled low confidence (CLAUDE.md §7 item 7).
+ */
+export const UNKNOWN_SKILL_RATIO = 0.25;
 
 /**
  * Builds a search URL for LinkedIn Jobs based on specified filters.
@@ -84,14 +103,15 @@ function estimateIndianSalary(title: string, seniority?: string): string {
 
 /**
  * Derives common core skills for a role title.
+ *
+ * Fallback only — used when the real posting body could not be fetched. It must
+ * never see the candidate's own skills: seeding them here made every job require
+ * skills the candidate definitionally had, so the score was matching the resume
+ * against itself (CLAUDE.md §7 item 5, idea.md §7.1).
  */
-function inferSkillsFromTitle(title: string, candidateSkills: string[] = []): string[] {
+function inferSkillsFromTitle(title: string): string[] {
   const t = title.toLowerCase();
   const baseSkills = new Set<string>();
-
-  if (candidateSkills.length > 0) {
-    candidateSkills.slice(0, 4).forEach((s) => baseSkills.add(s));
-  }
 
   if (t.includes("full stack") || t.includes("fullstack")) {
     baseSkills.add("React");
@@ -119,6 +139,118 @@ function inferSkillsFromTitle(title: string, candidateSkills: string[] = []): st
   }
 
   return Array.from(baseSkills).slice(0, 6);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Skill matching                                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Multi-word forms that appear both spaced and joined. Collapsing them keeps
+ * "Front End" and "Frontend" comparable without introducing fuzzy matching.
+ */
+const PHRASE_NORMALISATIONS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\bfront\s+end\b/g, "frontend"],
+  [/\bback\s+end\b/g, "backend"],
+  [/\bfull\s+stack\b/g, "fullstack"],
+];
+
+/**
+ * Surface forms of the same technology. A small, explicit table — a real skill
+ * taxonomy (ESCO / O*NET) is idea.md §7.3, deliberately not this phase.
+ */
+const TOKEN_ALIASES: Record<string, string> = {
+  "node.js": "node",
+  nodejs: "node",
+  "react.js": "react",
+  reactjs: "react",
+  "next.js": "next",
+  nextjs: "next",
+  "vue.js": "vue",
+  vuejs: "vue",
+  "express.js": "express",
+  expressjs: "express",
+  "angular.js": "angular",
+  angularjs: "angular",
+  golang: "go",
+  postgres: "postgresql",
+  k8s: "kubernetes",
+  js: "javascript",
+  ts: "typescript",
+};
+
+/**
+ * Splits a skill or title into comparable tokens.
+ *
+ * Punctuation that carries meaning (`+`, `#`, `.`) survives so "C++", "C#", and
+ * ".NET" stay distinct from "C" and "NET".
+ */
+export function normalizeSkillTokens(raw: string): string[] {
+  let normalised = (raw || "").toLowerCase().replace(/[‘’']/g, "");
+
+  for (const [pattern, replacement] of PHRASE_NORMALISATIONS) {
+    normalised = normalised.replace(pattern, replacement);
+  }
+
+  const tokens = normalised
+    .replace(/[^a-z0-9+#.]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  // "Node JS" / "React JS" — a trailing "js" qualifies the previous token
+  // rather than meaning JavaScript on its own.
+  if (tokens.length > 1 && tokens[tokens.length - 1] === "js") {
+    tokens.pop();
+  }
+
+  return tokens.map(canonicalToken).filter(Boolean);
+}
+
+function canonicalToken(token: string): string {
+  const stripped = token.replace(/^\.+|\.+$/g, "") || token;
+  const alias = TOKEN_ALIASES[token] ?? TOKEN_ALIASES[stripped];
+  if (alias) return alias;
+
+  const base = stripped;
+  // Deterministic plural collapse, applied identically to both sides of every
+  // comparison, so it can only merge forms of one word — never distinct skills.
+  if (base.length > 3 && base.endsWith("s") && !base.endsWith("ss")) {
+    return base.slice(0, -1);
+  }
+
+  return base;
+}
+
+/** True when `needle` appears as a contiguous run of tokens inside `haystack`. */
+function containsTokenSequence(haystack: string[], needle: string[]): boolean {
+  if (needle.length === 0 || needle.length > haystack.length) return false;
+
+  for (let i = 0; i + needle.length <= haystack.length; i++) {
+    let found = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        found = false;
+        break;
+      }
+    }
+    if (found) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Token-boundary skill comparison.
+ *
+ * Replaces the old bidirectional *substring* test, which matched "Java" against
+ * "JavaScript" and "R" against "React" (CLAUDE.md §7 item 7). Matching is
+ * deterministic: no edit distance, no embeddings, no synonym inference beyond
+ * the explicit alias table above.
+ */
+export function skillTokensMatch(a: string[], b: string[]): boolean {
+  if (a.length === 0 || b.length === 0) return false;
+  return containsTokenSequence(a, b) || containsTokenSequence(b, a);
 }
 
 /**
@@ -238,10 +370,13 @@ export async function fetchLiveLinkedInGuestJobs(
           workplace_type: workplaceType,
           salary,
           posted_date: postedDate,
+          // Placeholder only. enrichJobsWithDescriptions replaces this with the
+          // real posting body for every job whose fetch succeeds.
           description: `Active job opening at ${company} in ${jobLocation}. View full requirements, team details, and submit your application directly on LinkedIn.`,
           apply_url: `https://www.linkedin.com/jobs/view/${urn}`,
           company_apply_url: companyUrl,
-          skills_required: inferSkillsFromTitle(title, resume?.extracted_skills),
+          skills_required: inferSkillsFromTitle(title),
+          skills_source: "inferred",
           experience_level: filters.experience_level !== "all" ? filters.experience_level : undefined,
         });
 
@@ -371,8 +506,84 @@ Return ONLY a JSON array with objects matching:
         )}`
     ),
     skills_required: Array.isArray(item.skills_required) ? item.skills_required : ["TypeScript", "React", "Node.js"],
+    // Nothing on this path is parsed from a real posting.
+    skills_source: "inferred" as const,
     experience_level: item.experience_level || "Mid-Senior level",
   }));
+}
+
+/**
+ * Cheap, network-free pre-ranking used only to decide which postings are worth
+ * spending a description fetch on. Runs against title-inferred skills, so it is
+ * a rough ordering — the real score is computed after enrichment.
+ */
+function rankJobsForEnrichment(jobs: JobListing[], resume?: ParsedResume): JobListing[] {
+  if (!resume) return jobs;
+
+  const candidateTokens = (resume.extracted_skills || [])
+    .map(normalizeSkillTokens)
+    .filter((tokens) => tokens.length > 0);
+  const roleTokens = (resume.target_roles || [])
+    .map(normalizeSkillTokens)
+    .filter((tokens) => tokens.length > 0);
+
+  const cheapScore = (job: JobListing): number => {
+    const titleTokens = normalizeSkillTokens(job.title);
+    const skillHits = (job.skills_required || []).filter((skill) => {
+      const skillTokens = normalizeSkillTokens(skill);
+      return candidateTokens.some((cs) => skillTokensMatch(cs, skillTokens));
+    }).length;
+    const roleHit = roleTokens.some((role) => skillTokensMatch(role, titleTokens)) ? 1 : 0;
+    return skillHits + roleHit * 2;
+  };
+
+  return [...jobs].sort((a, b) => cheapScore(b) - cheapScore(a));
+}
+
+/**
+ * Replaces placeholder descriptions and title-inferred skills with the real
+ * posting body wherever LinkedIn returns one.
+ *
+ * Per-job failure is contained: that listing keeps its inferred skills and stays
+ * marked `skills_source: "inferred"` so the UI and the score can tell the
+ * difference. Nothing here fabricates requirements text.
+ */
+export async function enrichJobsWithDescriptions(
+  jobs: JobListing[],
+  resume?: ParsedResume,
+  options: FetchJobDescriptionsOptions = {}
+): Promise<JobListing[]> {
+  if (jobs.length === 0) return jobs;
+
+  const targets = rankJobsForEnrichment(jobs, resume)
+    .slice(0, JOB_DESCRIPTION_FETCH_LIMIT)
+    .map((job) => job.id);
+
+  const descriptions = await fetchJobDescriptions(targets, options);
+
+  if (descriptions.size === 0) {
+    console.warn("[JobDescription] No posting bodies retrieved; all jobs stay on inferred skills.");
+    return jobs;
+  }
+
+  console.log(
+    `[JobDescription] Retrieved ${descriptions.size}/${targets.length} posting bodies (cache: ${JSON.stringify(
+      jobDescriptionCacheStats()
+    )}).`
+  );
+
+  return jobs.map((job) => {
+    const found = descriptions.get(job.id);
+    if (!found || found.skills.length === 0) return job;
+
+    return {
+      ...job,
+      description: found.text,
+      skills_required: found.skills,
+      skills_source: "posting" as const,
+      experience_level: found.seniority || job.experience_level,
+    };
+  });
 }
 
 /**
@@ -391,7 +602,8 @@ export async function searchLinkedInJobs(
 
     if (liveJobs && liveJobs.length >= 3) {
       console.log(`[LinkedIn-Live] Successfully retrieved ${liveJobs.length} live jobs directly from LinkedIn.`);
-      return liveJobs;
+      // 2. Replace placeholder bodies with the real posting text.
+      return await enrichJobsWithDescriptions(liveJobs, resume);
     }
   } catch (err) {
     console.warn("[LinkedIn-Live] Guest scraper encountered an error, using AI discovery:", err);
@@ -404,12 +616,21 @@ export async function searchLinkedInJobs(
 
 /**
  * Calculates candidate fit, match score, strengths, and missing skills.
+ *
+ * The score uses the full 0–100 range: a job sharing no skills with the resume
+ * and no title alignment scores 0. Scores are expected to read lower than the
+ * old `62 + skillRatio * 33` formula, which could not go below 62.
  */
 export function scoreJobsWithResume(
   jobs: JobListing[],
   resume: ParsedResume
 ): JobListing[] {
-  const candidateSkills = (resume.extracted_skills || []).map((s) => s.toLowerCase());
+  const candidateSkillTokens = (resume.extracted_skills || [])
+    .map(normalizeSkillTokens)
+    .filter((tokens) => tokens.length > 0);
+  const targetRoleTokens = (resume.target_roles || [])
+    .map(normalizeSkillTokens)
+    .filter((tokens) => tokens.length > 0);
 
   return jobs.map((job) => {
     const jobSkills = job.skills_required || [];
@@ -417,10 +638,8 @@ export function scoreJobsWithResume(
     const missing: string[] = [];
 
     jobSkills.forEach((skill) => {
-      const skillLower = skill.toLowerCase();
-      const isMatched = candidateSkills.some(
-        (cs) => cs.includes(skillLower) || skillLower.includes(cs)
-      );
+      const skillTokens = normalizeSkillTokens(skill);
+      const isMatched = candidateSkillTokens.some((cs) => skillTokensMatch(cs, skillTokens));
 
       if (isMatched) {
         matched.push(skill);
@@ -429,33 +648,38 @@ export function scoreJobsWithResume(
       }
     });
 
-    // Base score on skill overlap
-    const skillRatio = jobSkills.length > 0 ? matched.length / jobSkills.length : 0.7;
-    let score = Math.round(62 + skillRatio * 33);
+    const hasSkillsData = jobSkills.length > 0;
+    const skillRatio = hasSkillsData ? matched.length / jobSkills.length : UNKNOWN_SKILL_RATIO;
 
-    // Title / role alignment bonus
-    const titleLower = job.title.toLowerCase();
-    const matchesTargetRole = resume.target_roles.some((role) => {
-      const roleLower = role.toLowerCase();
-      return (
-        titleLower.includes(roleLower) ||
-        roleLower.includes(titleLower) ||
-        (roleLower.includes("frontend") && titleLower.includes("frontend")) ||
-        (roleLower.includes("full stack") && titleLower.includes("full stack")) ||
-        (roleLower.includes("backend") && titleLower.includes("backend"))
-      );
-    });
+    const titleTokens = normalizeSkillTokens(job.title);
+    const matchesTargetRole = targetRoleTokens.some((role) => skillTokensMatch(role, titleTokens));
 
-    if (matchesTargetRole) {
-      score = Math.min(99, score + 6);
-    }
+    const score = Math.max(
+      0,
+      Math.min(100, Math.round(skillRatio * SKILL_WEIGHT + (matchesTargetRole ? ROLE_WEIGHT : 0)))
+    );
+
+    const confidence: "high" | "medium" | "low" = !hasSkillsData
+      ? "low"
+      : job.skills_source === "posting"
+        ? "high"
+        : "medium";
 
     const matchReasons: string[] = [];
     if (matched.length > 0) {
-      matchReasons.push(`Matches ${matched.length} key skills: ${matched.slice(0, 4).join(", ")}`);
+      matchReasons.push(
+        `Matches ${matched.length} of ${jobSkills.length} listed skills: ${matched.slice(0, 4).join(", ")}`
+      );
     }
     if (matchesTargetRole) {
       matchReasons.push(`Role title matches your target trajectory (${resume.target_roles[0]})`);
+    }
+    if (confidence === "high") {
+      matchReasons.push("Scored against requirements taken from the live LinkedIn posting");
+    } else if (confidence === "medium") {
+      matchReasons.push("Requirements unavailable — skills inferred from the job title");
+    } else {
+      matchReasons.push("No requirements data for this posting; score reflects title alignment only");
     }
     if (resume.years_of_experience >= 2) {
       matchReasons.push(`Experience level aligns with ${resume.seniority_level} expectations`);
@@ -464,6 +688,7 @@ export function scoreJobsWithResume(
     return {
       ...job,
       match_score: score,
+      match_confidence: confidence,
       match_reasons: matchReasons,
       missing_skills: missing,
     };
