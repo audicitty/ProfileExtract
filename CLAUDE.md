@@ -6,7 +6,7 @@
 
 ## 1. Core Product Capabilities
 
-The platform focuses on 2 core workflows:
+The platform focuses on 3 core workflows:
 
 ### 1. LinkedIn URL Profile Extractor (`/url-extract`)
 - **Route**: `src/app/url-extract/page.tsx` | Component: `src/components/UrlExtractClient.tsx`
@@ -35,6 +35,17 @@ The platform focuses on 2 core workflows:
      - `company_apply_url`: Direct `https://www.linkedin.com/company/{company_slug}` verified organization profile.
   6. **Fit Scoring**: Compares the candidate's skills against each job's requirements on token boundaries to calculate a match score across the full 0–100 range, highlighting matched strengths and missing skill gaps. Each listing also carries `match_confidence` (`high` = scored against the real posting, `medium` = title-inferred skills, `low` = no skills data). Deterministic string matching — no model call is involved in scoring.
   7. **One-Click CSV Export**: Downloads all matched jobs with compensation, locations, apply links, and scores (`downloadJobsCsv`).
+  8. **"Optimize for this job"**: each job card hands that posting's real description to the Resume Enhancer through `sessionStorage` (`src/lib/resume-enhance-target.ts`) and navigates to `/enhance` for targeted keyword-gap analysis.
+
+### 3. Resume Enhancer & ATS Audit (`/enhance`)
+- **Route**: `src/app/enhance/page.tsx` | Component: `src/components/ResumeEnhancerClient.tsx`
+- **Backend**: `src/app/api/resume/enhance/route.ts`, `src/lib/pdf-structure.ts`, `src/lib/resume-ats.ts`, `src/lib/resume-enhance.ts`
+- **Function**: two layers with a hard split (idea.md §1.1), and the split is the point:
+  1. **Structural layer (measured)**: an uploaded PDF is reduced to positioned text (`unpdf`), and the bench-derived checks in `checks/registry.json` run over it. The score and sub-scores are assembled in TypeScript from measured severities — no model is involved. Pasted text has no layout, so it gets no structure score rather than a made-up one.
+  2. **Content layer (judgement)**: a short, schema-enforced Gemini prompt covers only weak/passive verbs, unquantified bullets, buzzword padding, tense drift, summary strength, and where a missing target-JD keyword could go. It returns findings and booleans, never a score.
+  3. **Keyword gaps are deterministic**: skills named in the target job description are token-boundary matched against the resume text (same matcher as the job pipeline). The model only proposes placements.
+  4. **Output**: score with sub-scores, issues grouped by severity, copyable rewritten bullets and summary, and a plain-text ATS-safe re-flow of the resume. No `.docx`/`.pdf` generation (idea.md §1.6).
+- **Intake**: shares `src/components/ResumeIntake.tsx` with the Job Matcher — one copy of the paste/PDF-base64 logic.
 
 ---
 
@@ -69,20 +80,24 @@ profex/
 │   │   │   ├── extract/route.ts          # AI Profile Text extractor route
 │   │   │   ├── extract-url/route.ts      # Bright Data profile URL scraper route
 │   │   │   ├── resume/scan/route.ts      # AI Resume scanner route (text & PDF)
+│   │   │   ├── resume/enhance/route.ts   # ATS structural audit + content review route
 │   │   │   └── jobs/search/route.ts      # Live job search & fit scoring route
 │   │   ├── dashboard/page.tsx            # Text Extractor workspace (auth-protected)
 │   │   ├── url-extract/page.tsx          # URL Extractor workspace (auth-protected)
 │   │   ├── jobs/page.tsx                 # AI Resume Scanner & Job Matcher (auth-protected)
+│   │   ├── enhance/page.tsx              # Resume Enhancer & ATS audit (auth-protected)
 │   │   ├── layout.tsx                    # Root layout with Navbar & Footer
 │   │   ├── globals.css                   # Global styling
 │   │   └── page.tsx                      # Landing page with feature highlights
 │   ├── components/
-│   │   ├── Navbar.tsx                    # Navigation with Text, URL, and Job Matcher links
+│   │   ├── Navbar.tsx                    # Navigation with URL Extractor, Resume Enhancer & Job Matcher links
 │   │   ├── Footer.tsx                    # Site footer
 │   │   ├── DashboardClient.tsx           # Text Extractor client UI
 │   │   ├── UrlExtractClient.tsx          # URL Extractor client UI
 │   │   ├── ProfileResults.tsx            # Structured profile view & CSV exporter
-│   │   ├── JobMatcherClient.tsx          # Resume intake, multi-city filter, job cards & apply links
+│   │   ├── JobMatcherClient.tsx          # Multi-city filter, job cards, apply links & "Optimize for this job"
+│   │   ├── ResumeIntake.tsx              # Shared paste / PDF-base64 intake (Job Matcher + Enhancer)
+│   │   ├── ResumeEnhancerClient.tsx      # Scores, issues by severity, copyable rewrites, ATS-safe text
 │   │   └── LoadingSkeleton.tsx           # Loading state skeletons
 │   ├── db/
 │   │   ├── schema.ts                     # Drizzle schema (users, sessions, accounts, verifications)
@@ -94,6 +109,10 @@ profex/
 │       ├── auth-client.ts                # Better Auth client hooks (useSession, signOut)
 │       ├── gemini.ts                     # Strict schema-enforced profile extraction
 │       ├── resume.ts                     # Gemini-powered resume analyzer (text & multimodal PDF)
+│       ├── pdf-structure.ts              # PDF -> positioned text items (unpdf), no interpretation
+│       ├── resume-ats.ts                 # Bench-derived structural checks & TS score assembly
+│       ├── resume-enhance.ts             # LLM content layer, keyword gaps, ATS-safe text
+│       ├── resume-enhance-target.ts      # Job card -> /enhance handoff (sessionStorage)
 │       ├── jobs.ts                       # Live LinkedIn jobs scraper, URL generator, AI fallback & match scoring
 │       ├── job-descriptions.ts           # Per-job posting fetch, TTL cache, HTML→text, skill parsing
 │       ├── csv.ts                        # Candidate profile RFC 4180 CSV export
@@ -103,6 +122,8 @@ profex/
 │   ├── csv.test.mjs                      # Profile CSV unit tests
 │   ├── brightdata.test.mjs               # Scraper normalization tests
 │   ├── jobs.test.mjs                     # Job search URL, token matching, scoring, description cache & CSV tests
+│   ├── resume-ats.test.mjs               # Structural checks, score assembly & PDF extraction tests
+│   ├── resume-enhance.test.mjs           # Prompt budget guard, keyword gaps, sections & ATS-safe text
 │   └── checks-registry.test.mjs          # Registry is generated, not hand-written (severity drift guard)
 ├── bench/                                # DEV TOOL ONLY — parser bench (see §8). Not in src/, not bundled.
 │   ├── content.json                      # One resume's content, held constant across fixtures

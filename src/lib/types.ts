@@ -223,3 +223,66 @@ export interface ResumeAudit {
   keyword_gaps?: string[];
   section_analysis?: { section: string; present: boolean; note: string }[];
 }
+
+/* -------------------------------------------------------------------------- */
+/* Resume content review — LLM layer (idea.md §1.1 division of labour)        */
+/* -------------------------------------------------------------------------- */
+
+export interface BulletRewrite {
+  original: string;
+  improved: string;
+  rationale: string;
+}
+
+/**
+ * One judgement call from the content layer. `check_id` is always a registry check
+ * with `layer: "llm"`; anything else the model returns is dropped.
+ *
+ * These carry no `severity_points`. The registry records every content check as
+ * `not-bench-measurable` (CLAUDE.md §8.2), so they are reported, never scored.
+ */
+export interface ContentFinding {
+  check_id: string;
+  statement: string;
+  /** The model's verdict for this check across the resume. */
+  passed: boolean;
+  section: string;
+  /** The resume's own words the verdict is about. */
+  excerpt: string;
+  problem: string;
+  fix: string;
+}
+
+/** Where one missing target-JD keyword could be added. Gaps themselves are TS-computed. */
+export interface KeywordPlacement {
+  keyword: string;
+  section: string;
+  suggestion: string;
+}
+
+/** Everything the content model returns, after validation. It never returns a score. */
+export interface ResumeContentReview {
+  findings: ContentFinding[];
+  bullet_rewrites: BulletRewrite[];
+  summary_present: boolean;
+  summary_strong: boolean;
+  summary_rewrite: string;
+  /** Deterministic: token-boundary match of JD skills against the resume text. */
+  keyword_gaps: string[];
+  /** Model-proposed placements for those gaps. Empty without a target JD. */
+  keyword_placements: KeywordPlacement[];
+  section_analysis: { section: string; present: boolean; note: string }[];
+  /** True when a target job description was supplied. */
+  target_jd_provided: boolean;
+}
+
+/** What POST /api/resume/enhance returns on success. */
+export interface ResumeEnhanceResult {
+  /** The structural audit, or null when the input was pasted text (no PDF to measure). */
+  audit: ResumeAudit | null;
+  /** Why `audit` is null, when it is. */
+  audit_skipped_reason?: "text_input" | "pdf_unreadable";
+  content: ResumeContentReview;
+  /** Deterministic plain-text re-flow of the resume (idea.md §1.6). */
+  ats_safe_text: string;
+}

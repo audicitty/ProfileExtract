@@ -65,6 +65,12 @@ export function Navbar() {
                 <span>URL Extractor</span>
               </Link>
               <Link
+                href="/enhance"
+                className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+              >
+                <span>Resume Enhancer</span>
+              </Link>
+              <Link
                 href="/jobs"
                 className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-primary)] transition hover:-translate-y-0.5 hover:text-[var(--color-primary-hover)]"
               >
