@@ -107,3 +107,119 @@ export interface JobSearchResponse {
   };
   error?: string;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Resume ATS audit — structural layer (checks/registry.yaml, idea.md §1.1)   */
+/* -------------------------------------------------------------------------- */
+
+/** One positioned text item as PDF.js reports it, in PDF space (origin bottom-left). */
+export interface PdfTextItem {
+  page: number;
+  /** Position in the page's content stream. Reading order as the file declares it. */
+  flow_index: number;
+  text: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  font_size: number;
+  font_name: string;
+}
+
+export interface PdfPage {
+  number: number;
+  width: number;
+  height: number;
+  /** Lower-left corner of the page box; y coordinates are measured from here. */
+  x_origin: number;
+  y_origin: number;
+  items: PdfTextItem[];
+}
+
+/**
+ * A resume PDF reduced to positioned text. This is the only input the structural
+ * checks take, which is what keeps them pure — see `src/lib/resume-ats.ts`.
+ */
+export interface ResumeDocument {
+  page_count: number;
+  pages: PdfPage[];
+  /** Every item across every page, in flow order. */
+  items: PdfTextItem[];
+  /** Plain text, lines separated by newlines, blocks on a line by two spaces. */
+  text: string;
+}
+
+/** Registry category, taken from the part of a check id before the first dot. */
+export type AtsCategory = "parseability" | "structure" | "layout" | "contact" | "dates";
+
+export type AtsCheckStatus = "pass" | "fail" | "not_applicable";
+
+export type AtsSeverity = "critical" | "warning" | "minor";
+
+/** What one registry check found. Never a bare boolean — the UI has to explain it. */
+export interface AtsFinding {
+  check_id: string;
+  category: AtsCategory;
+  /** Registry statement, verbatim. */
+  statement: string;
+  status: AtsCheckStatus;
+  /** The bench-measured weight from the registry. 0 means measured, no drop. */
+  severity_points: number;
+  /** severity_points when the check failed, otherwise 0. */
+  points_deducted: number;
+  /** Registry confidence. "single-parser" means low confidence (CLAUDE.md §8.3). */
+  confidence: string;
+  /** Registry caveat, when the bench did not settle the check (CLAUDE.md §8.4). */
+  caveat?: string;
+  /** Why this status, in one sentence. */
+  detail: string;
+  /** Lines or values the finding is based on, so a user can go look. */
+  evidence: string[];
+  /** Numbers the check measured, for debugging and for the UI to show. */
+  measurements: Record<string, number | string | boolean>;
+}
+
+/**
+ * A failed check, shaped for display. idea.md §1.4 sketched `before`/`after` for
+ * rewritten text; a structural check has no rewrite, so those stay optional and are
+ * filled by the Phase 4 content layer.
+ */
+export interface ResumeIssue {
+  check_id: string;
+  severity: AtsSeverity;
+  severity_points: number;
+  confidence: string;
+  category: AtsCategory;
+  /** Resume section the issue was found in, when the check can name one. */
+  section: string | null;
+  problem: string;
+  fix: string;
+  evidence: string[];
+  caveat?: string;
+  before?: string;
+  after?: string;
+}
+
+/**
+ * The structural half of the audit. `ats_score` and `sub_scores` are computed in
+ * TypeScript from registry weights — no model is involved (idea.md §1.1 "Scoring").
+ */
+export interface ResumeAudit {
+  /** 0-100, or null when the PDF carries no text to analyse. */
+  ats_score: number | null;
+  status: "scored" | "no_text_layer";
+  /** Per registry category. null when no check in that category was applicable. */
+  sub_scores: Partial<Record<AtsCategory, number | null>>;
+  issues: ResumeIssue[];
+  /** Every deterministic check that ran, including the ones that passed. */
+  findings: AtsFinding[];
+  registry: {
+    bench_run_at: string;
+    flag_threshold_points: number;
+    checks_run: number;
+  };
+  /* Populated by the Phase 4 LLM content layer, not by resume-ats.ts. */
+  bullet_rewrites?: { original: string; improved: string; rationale: string }[];
+  keyword_gaps?: string[];
+  section_analysis?: { section: string; present: boolean; note: string }[];
+}
