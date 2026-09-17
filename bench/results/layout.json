@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-09-17T14:26:18.720Z",
+  "note": "Properties of the fixture PDFs themselves, not parser results. order_agreement compares a top-to-bottom visual reading against the file's own flow order.",
+  "y_tolerance_points": 2,
+  "column_gap_points": 40,
+  "fixtures": [
+    {
+      "id": "01-baseline",
+      "dimension": "baseline",
+      "text_layer_chars": 1555,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "02-two-column",
+      "dimension": "column-layout",
+      "text_layer_chars": 1539,
+      "text_items": 59,
+      "order_agreement": 0.224,
+      "side_by_side_ratio": 0.167
+    },
+    {
+      "id": "03-scanned-image",
+      "dimension": "text-encoding",
+      "text_layer_chars": 0,
+      "text_items": 0,
+      "order_agreement": null,
+      "side_by_side_ratio": null
+    },
+    {
+      "id": "04-tables",
+      "dimension": "structure",
+      "text_layer_chars": 1533,
+      "text_items": 54,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0.182
+    },
+    {
+      "id": "05-creative-headings",
+      "dimension": "headings",
+      "text_layer_chars": 1590,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "06-hyphen-bullets",
+      "dimension": "bullets",
+      "text_layer_chars": 1555,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "07-contact-in-margin",
+      "dimension": "contact-placement",
+      "text_layer_chars": 1555,
+      "text_items": 43,
+      "order_agreement": 0.976,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "08-dates-month-year",
+      "dimension": "date-format",
+      "text_layer_chars": 1587,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "09-dates-mixed",
+      "dimension": "date-format",
+      "text_layer_chars": 1551,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "10-icon-contact",
+      "dimension": "contact-style",
+      "text_layer_chars": 1556,
+      "text_items": 50,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "11-two-page",
+      "dimension": "pagination",
+      "text_layer_chars": 1555,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0
+    },
+    {
+      "id": "12-right-aligned-dates",
+      "dimension": "date-placement",
+      "text_layer_chars": 1555,
+      "text_items": 43,
+      "order_agreement": 1,
+      "side_by_side_ratio": 0.097
+    },
+    {
+      "id": "13-sidebar-skills",
+      "dimension": "sidebar",
+      "text_layer_chars": 1544,
+      "text_items": 54,
+      "order_agreement": 0.83,
+      "side_by_side_ratio": 0.048
+    }
+  ]
+}

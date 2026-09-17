@@ -1,0 +1,520 @@
+{
+  "generated_at": "2026-09-17T14:26:18.164Z",
+  "content_source": "bench/content.json",
+  "parsers": {
+    "open-resume": {
+      "kind": "TypeScript, pdfjs-dist positioned text items",
+      "source": "https://github.com/xitanggg/open-resume (AGPL-3.0, vendored)",
+      "probes": [
+        "name",
+        "email",
+        "phone",
+        "location",
+        "url",
+        "skills",
+        "work_companies",
+        "work_titles",
+        "work_dates",
+        "education",
+        "bullets"
+      ]
+    },
+    "pyresparser": {
+      "kind": "Python, pdfminer.six text + pyresparser extractors (two compatibility shims)",
+      "source": "pyresparser 1.0.6 (GPL-3.0) on PyPI",
+      "probes": [
+        "name",
+        "email",
+        "phone",
+        "skills",
+        "sections",
+        "work_entities",
+        "education",
+        "bullets"
+      ]
+    }
+  },
+  "fixtures": [
+    {
+      "id": "01-baseline",
+      "dimension": "baseline",
+      "label": "Single column, standard headings, glyph bullets, MM/YYYY dates, contact in body",
+      "varied_option": null,
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "02-two-column",
+      "dimension": "column-layout",
+      "label": "Whole resume flowed into two columns",
+      "varied_option": "columns",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "03-scanned-image",
+      "dimension": "text-encoding",
+      "label": "Baseline page rasterised to an image — no text layer",
+      "varied_option": "rasterize",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 0,
+          "probes": {
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "location": 0,
+            "url": 0,
+            "skills": 0,
+            "work_companies": 0,
+            "work_titles": 0,
+            "work_dates": 0,
+            "education": 0,
+            "bullets": 0
+          }
+        },
+        "pyresparser": {
+          "accuracy": 0,
+          "probes": {
+            "name": 0,
+            "email": 0,
+            "phone": 0,
+            "skills": 0,
+            "sections": 0,
+            "work_entities": 0,
+            "education": 0,
+            "bullets": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "04-tables",
+      "dimension": "structure",
+      "label": "Experience and skills laid out in HTML tables",
+      "varied_option": "experienceLayout",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "05-creative-headings",
+      "dimension": "headings",
+      "label": "Creative section headings instead of Experience / Education / Skills",
+      "varied_option": "headings",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 45.5,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 0,
+            "work_companies": 0,
+            "work_titles": 0,
+            "work_dates": 0,
+            "education": 0,
+            "bullets": 0
+          }
+        },
+        "pyresparser": {
+          "accuracy": 56.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 0,
+            "work_entities": 0,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "06-hyphen-bullets",
+      "dimension": "bullets",
+      "label": "Hyphens instead of glyph bullet characters",
+      "varied_option": "bullet",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "07-contact-in-margin",
+      "dimension": "contact-placement",
+      "label": "Contact line in the PDF page margin (header/footer) instead of the body",
+      "varied_option": "contactPlacement",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 63.6,
+          "probes": {
+            "name": 100,
+            "email": 0,
+            "phone": 0,
+            "location": 0,
+            "url": 0,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "08-dates-month-year",
+      "dimension": "date-format",
+      "label": "Dates as Month YYYY instead of MM/YYYY",
+      "varied_option": "dateFormat",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "09-dates-mixed",
+      "dimension": "date-format",
+      "label": "Dates in mixed formats across entries",
+      "varied_option": "dateFormat",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "10-icon-contact",
+      "dimension": "contact-style",
+      "label": "Contact line prefixed with unicode icon glyphs",
+      "varied_option": "contactStyle",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "11-two-page",
+      "dimension": "pagination",
+      "label": "Same content spread over two pages, splitting the experience section",
+      "varied_option": "pagination",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 90.9,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 66.7,
+            "work_titles": 66.7,
+            "work_dates": 66.7,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "12-right-aligned-dates",
+      "dimension": "date-placement",
+      "label": "Dates right-aligned on the same line as the job title",
+      "varied_option": "datePlacement",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    },
+    {
+      "id": "13-sidebar-skills",
+      "dimension": "sidebar",
+      "label": "Narrow left sidebar holding contact and skills, main column holds the rest",
+      "varied_option": "sidebar",
+      "parsers": {
+        "open-resume": {
+          "accuracy": 100,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "location": 100,
+            "url": 100,
+            "skills": 100,
+            "work_companies": 100,
+            "work_titles": 100,
+            "work_dates": 100,
+            "education": 100,
+            "bullets": 100
+          }
+        },
+        "pyresparser": {
+          "accuracy": 81.3,
+          "probes": {
+            "name": 100,
+            "email": 100,
+            "phone": 100,
+            "skills": 50,
+            "sections": 100,
+            "work_entities": 100,
+            "education": 0,
+            "bullets": 100
+          }
+        }
+      }
+    }
+  ]
+}

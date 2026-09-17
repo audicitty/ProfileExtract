@@ -1,0 +1,6 @@
+# Oracle B + the fixture rasteriser. Installed into bench/.venv (gitignored) by
+# `node bench/setup-python.mjs`. Development-only: nothing here is imported by src/.
+pyresparser==1.0.6          # GPL-3.0 - field extractors (see pyresparser_adapter.py for the two shims)
+spacy==3.8.16               # pyresparser's POS/NER backend
+pymupdf==1.28.2             # AGPL-3.0 - rasterises the scanned fixture
+pyyaml==6.0.3                # validation only: lets you sanity-check checks/registry.yaml parses

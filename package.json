@@ -9,7 +9,11 @@
     "lint": "eslint",
     "test": "tsx --test test/**/*.test.mjs",
     "db:push": "drizzle-kit push",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "bench:setup": "node bench/setup-python.mjs",
+    "bench:fixtures": "node bench/build-fixtures.mjs",
+    "bench": "node bench/run.mjs",
+    "bench:registry": "node bench/build-registry.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
@@ -35,6 +39,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
+    "pdfjs-dist": "^5.6.205",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5"

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Development-only parser bench, including vendored third-party parser code.
+    "bench/**",
   ]),
 ]);
 

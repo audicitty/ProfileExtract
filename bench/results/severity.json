@@ -1,0 +1,252 @@
+{
+  "generated_at": "2026-09-17T14:26:18.166Z",
+  "definition": "drop_points = baseline fixture accuracy minus this fixture's accuracy, in accuracy points, per parser",
+  "flag_threshold_points": 5,
+  "baseline_accuracy": {
+    "open-resume": 100,
+    "pyresparser": 81.3
+  },
+  "dimensions": [
+    {
+      "fixture": "03-scanned-image",
+      "dimension": "text-encoding",
+      "varied_option": "rasterize",
+      "label": "Baseline page rasterised to an image — no text layer",
+      "drop_points": {
+        "open-resume": 100,
+        "pyresparser": 81.3
+      },
+      "mean_drop_points": 90.7,
+      "flagged_by": [
+        "open-resume",
+        "pyresparser"
+      ],
+      "confidence": "both-parsers",
+      "worst_probes": {
+        "open-resume": [
+          "name -100",
+          "email -100",
+          "phone -100",
+          "location -100"
+        ],
+        "pyresparser": [
+          "name -100",
+          "email -100",
+          "phone -100",
+          "sections -100"
+        ]
+      }
+    },
+    {
+      "fixture": "05-creative-headings",
+      "dimension": "headings",
+      "varied_option": "headings",
+      "label": "Creative section headings instead of Experience / Education / Skills",
+      "drop_points": {
+        "open-resume": 54.5,
+        "pyresparser": 25
+      },
+      "mean_drop_points": 39.8,
+      "flagged_by": [
+        "open-resume",
+        "pyresparser"
+      ],
+      "confidence": "both-parsers",
+      "worst_probes": {
+        "open-resume": [
+          "skills -100",
+          "work_companies -100",
+          "work_titles -100",
+          "work_dates -100"
+        ],
+        "pyresparser": [
+          "sections -100",
+          "work_entities -100"
+        ]
+      }
+    },
+    {
+      "fixture": "07-contact-in-margin",
+      "dimension": "contact-placement",
+      "varied_option": "contactPlacement",
+      "label": "Contact line in the PDF page margin (header/footer) instead of the body",
+      "drop_points": {
+        "open-resume": 36.4,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 18.2,
+      "flagged_by": [
+        "open-resume"
+      ],
+      "confidence": "single-parser",
+      "worst_probes": {
+        "open-resume": [
+          "email -100",
+          "phone -100",
+          "location -100",
+          "url -100"
+        ],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "11-two-page",
+      "dimension": "pagination",
+      "varied_option": "pagination",
+      "label": "Same content spread over two pages, splitting the experience section",
+      "drop_points": {
+        "open-resume": 9.1,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 4.6,
+      "flagged_by": [
+        "open-resume"
+      ],
+      "confidence": "single-parser",
+      "worst_probes": {
+        "open-resume": [
+          "work_companies -33.3",
+          "work_titles -33.3",
+          "work_dates -33.3"
+        ],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "02-two-column",
+      "dimension": "column-layout",
+      "varied_option": "columns",
+      "label": "Whole resume flowed into two columns",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "04-tables",
+      "dimension": "structure",
+      "varied_option": "experienceLayout",
+      "label": "Experience and skills laid out in HTML tables",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "06-hyphen-bullets",
+      "dimension": "bullets",
+      "varied_option": "bullet",
+      "label": "Hyphens instead of glyph bullet characters",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "08-dates-month-year",
+      "dimension": "date-format",
+      "varied_option": "dateFormat",
+      "label": "Dates as Month YYYY instead of MM/YYYY",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "09-dates-mixed",
+      "dimension": "date-format",
+      "varied_option": "dateFormat",
+      "label": "Dates in mixed formats across entries",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "10-icon-contact",
+      "dimension": "contact-style",
+      "varied_option": "contactStyle",
+      "label": "Contact line prefixed with unicode icon glyphs",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "12-right-aligned-dates",
+      "dimension": "date-placement",
+      "varied_option": "datePlacement",
+      "label": "Dates right-aligned on the same line as the job title",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    },
+    {
+      "fixture": "13-sidebar-skills",
+      "dimension": "sidebar",
+      "varied_option": "sidebar",
+      "label": "Narrow left sidebar holding contact and skills, main column holds the rest",
+      "drop_points": {
+        "open-resume": 0,
+        "pyresparser": 0
+      },
+      "mean_drop_points": 0,
+      "flagged_by": [],
+      "confidence": "no-measured-drop",
+      "worst_probes": {
+        "open-resume": [],
+        "pyresparser": []
+      }
+    }
+  ]
+}

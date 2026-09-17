@@ -1,0 +1,66 @@
+{
+  "_comment": "The single resume content, held constant across every fixture. Fictional person. Phone/location formats are deliberately ones both oracles can parse at baseline (both are US-centric: 3-3-4 digit groups, 'City, ST'), so that fixtures have headroom to lose accuracy rather than starting at zero.",
+  "name": "Aarav Mehta",
+  "email": "aarav.mehta@example.com",
+  "phone": "+91 988 765 4321",
+  "location": "Bengaluru, KA",
+  "url": "linkedin.com/in/aaravmehta",
+  "summary": "Backend engineer with six years building payment and identity services on Node.js and PostgreSQL, focused on reliability and clean API contracts.",
+  "work": [
+    {
+      "company": "Zeta Payments",
+      "title": "Senior Backend Engineer",
+      "start": { "month": 3, "year": 2022 },
+      "end": null,
+      "bullets": [
+        "Rebuilt the settlement pipeline in Node.js and PostgreSQL, cutting end of day reconciliation from 40 minutes to 6 minutes.",
+        "Designed idempotent refund APIs handling 1.2 million requests per day with a 99.97 percent success rate.",
+        "Mentored four engineers through the migration from a monolith to six bounded services."
+      ]
+    },
+    {
+      "company": "Nimbus Retail Tech",
+      "title": "Backend Engineer",
+      "start": { "month": 7, "year": 2019 },
+      "end": { "month": 2, "year": 2022 },
+      "bullets": [
+        "Built an inventory sync service in TypeScript that reduced oversell incidents by 82 percent across 300 stores.",
+        "Introduced contract tests to the order service, dropping production regressions from 9 to 2 per quarter.",
+        "Migrated session storage from Redis to PostgreSQL, saving 4200 dollars per month in infrastructure cost."
+      ]
+    },
+    {
+      "company": "Coral Labs",
+      "title": "Software Engineer",
+      "start": { "month": 6, "year": 2018 },
+      "end": { "month": 6, "year": 2019 },
+      "bullets": [
+        "Shipped the public REST API used by 40 partner integrations, documented with OpenAPI.",
+        "Automated nightly data exports in Python, removing 10 hours of manual work per week."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "school": "Manipal Institute of Technology",
+      "degree": "Bachelor of Engineering in Computer Science",
+      "start": { "month": 8, "year": 2014 },
+      "end": { "month": 5, "year": 2018 },
+      "gpa": "8.4/10"
+    }
+  ],
+  "projects": [
+    {
+      "name": "Ledgerline",
+      "start": { "month": 1, "year": 2023 },
+      "end": { "month": 9, "year": 2023 },
+      "bullets": [
+        "Open source double entry ledger in TypeScript with 900 stars and 14 contributors."
+      ]
+    }
+  ],
+  "skills": [
+    "JavaScript", "TypeScript", "Node.js", "Python", "PostgreSQL", "Redis",
+    "Docker", "Kubernetes", "AWS", "GraphQL", "REST", "Kafka"
+  ]
+}

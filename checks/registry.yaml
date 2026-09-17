@@ -1,0 +1,273 @@
+# ATS check registry - generated, do not hand-edit.
+#
+# Produced by: node bench/build-registry.mjs
+# Statements and assertions come from checks/checks.mjs.
+# Every severity_points value is a measurement from bench/results/severity.json:
+# drop_points = baseline fixture accuracy minus this fixture's accuracy, in accuracy points, per parser.
+# Checks with no fixture carry severity_points: null and say why.
+
+bench_run_at: "2026-09-17T14:26:18.164Z"
+parsers:
+  - name: "open-resume"
+    kind: "TypeScript, pdfjs-dist positioned text items"
+    source: "https://github.com/xitanggg/open-resume (AGPL-3.0, vendored)"
+    baseline_accuracy_pct: 100
+  - name: "pyresparser"
+    kind: "Python, pdfminer.six text + pyresparser extractors (two compatibility shims)"
+    source: "pyresparser 1.0.6 (GPL-3.0) on PyPI"
+    baseline_accuracy_pct: 81.3
+flag_threshold_points: 5
+
+checks:
+  - id: "parseability.text_layer_present"
+    statement: "The PDF must carry a real text layer. A scanned or image-only resume yields no fields at all."
+    layer: "drop"
+    severity_status: "measured"
+    severity_points: 90.7
+    severity_by_parser:
+      open-resume: 100
+      pyresparser: 81.3
+    parsers_agreed: ["open-resume", "pyresparser"]
+    confidence: "both-parsers"
+    evidence_fixture: "03-scanned-image"
+    fields_lost: "open-resume: name -100; open-resume: email -100; open-resume: phone -100; open-resume: location -100; pyresparser: name -100; pyresparser: email -100; pyresparser: phone -100; pyresparser: sections -100"
+    assertion: "extractedText.replace(/\\s/g, '').length >= 200 for a one-page resume; otherwise stop and tell the user to export a text PDF."
+
+  - id: "structure.standard_section_headings"
+    statement: "Section headings must use conventional words (Experience, Education, Skills, Projects). Creative headings cost more parsed fields than any other formatting choice that keeps a text layer."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 39.8
+    severity_by_parser:
+      open-resume: 54.5
+      pyresparser: 25
+    parsers_agreed: ["open-resume", "pyresparser"]
+    confidence: "both-parsers"
+    evidence_fixture: "05-creative-headings"
+    fields_lost: "open-resume: skills -100; open-resume: work_companies -100; open-resume: work_titles -100; open-resume: work_dates -100; pyresparser: sections -100; pyresparser: work_entities -100"
+    assertion: "every detected section heading line matches the standard-heading keyword list used by the section detector."
+
+  - id: "contact.in_body_not_page_margin"
+    statement: "Contact details must sit in the document body, not in the page header/footer margin."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 18.2
+    severity_by_parser:
+      open-resume: 36.4
+      pyresparser: 0
+    parsers_agreed: ["open-resume"]
+    confidence: "single-parser"
+    evidence_fixture: "07-contact-in-margin"
+    fields_lost: "open-resume: email -100; open-resume: phone -100; open-resume: location -100; open-resume: url -100"
+    assertion: "no text item carrying an email, phone or URL has y within the top or bottom 10% of the page box."
+
+  - id: "structure.length_one_page"
+    statement: "A resume spread over two pages loses work-history fields at the page boundary."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 4.6
+    severity_by_parser:
+      open-resume: 9.1
+      pyresparser: 0
+    parsers_agreed: ["open-resume"]
+    confidence: "single-parser"
+    evidence_fixture: "11-two-page"
+    fields_lost: "open-resume: work_companies -33.3; open-resume: work_titles -33.3; open-resume: work_dates -33.3"
+    assertion: "pdf.numPages === 1, or the section split across the boundary is reported."
+
+  - id: "layout.single_column_reading_order"
+    statement: "A two-column layout makes the page's visual reading order disagree with its flow order. Neither bench oracle is affected, because both read in flow order; a parser that sorts text top-to-bottom would read the columns interleaved."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "02-two-column"
+    fields_lost: "none"
+    assertion: "visual (y descending, x ascending) reading order agrees with flow order; bench/results/layout.json reports order_agreement per fixture."
+    caveat: "NOT SETTLED by this bench. Measured drop is 0.0 for both oracles, but bench/results/layout.json measures order_agreement 0.224 for this fixture versus 1.0 for the baseline, so the risk is real for a y-sorting parser and unobservable through these two."
+
+  - id: "layout.sidebar_reading_order"
+    statement: "A narrow sidebar column has the same reading-order ambiguity as a full two-column layout, less severely."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "13-sidebar-skills"
+    fields_lost: "none"
+    assertion: "no page region holds a vertical block of text side by side with the main column; layout.json reports order_agreement."
+    caveat: "NOT SETTLED by this bench, same reason as layout.single_column_reading_order. Measured order_agreement 0.83 versus 1.0 at baseline."
+
+  - id: "structure.no_tables"
+    statement: "Experience and skills laid out in HTML/Word tables. Widely claimed to break ATS parsing; not reproduced here."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "04-tables"
+    fields_lost: "none"
+    assertion: "no text item belongs to a repeating row/column grid (detected from aligned x positions across consecutive lines)."
+
+  - id: "structure.glyph_bullets"
+    statement: "Bullet lists marked with hyphens instead of a bullet glyph. Commonly listed as an ATS risk; not reproduced here."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "06-hyphen-bullets"
+    fields_lost: "none"
+    assertion: "every list line starts with a character in the bullet-glyph set."
+
+  - id: "dates.consistent_format"
+    statement: "Mixed date formats across entries (03/2022, Jul 2019, 2018). Commonly listed as an ATS risk; not reproduced here."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "09-dates-mixed"
+    fields_lost: "none"
+    assertion: "all detected date ranges match one format."
+
+  - id: "dates.numeric_month_format"
+    statement: "Month YYYY dates instead of MM/YYYY. Not reproduced here as a parsing risk."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "08-dates-month-year"
+    fields_lost: "none"
+    assertion: "date ranges match a single recognised pattern."
+
+  - id: "dates.inline_not_right_aligned"
+    statement: "Dates right-aligned on the job-title line rather than on their own line. Not reproduced here as a parsing risk."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "12-right-aligned-dates"
+    fields_lost: "none"
+    assertion: "a date item is not separated from its title item by a gap larger than one column width."
+
+  - id: "contact.no_icon_glyphs"
+    statement: "Unicode icon glyphs before contact details (envelope, phone, house). Not reproduced here as a parsing risk."
+    layer: "deterministic"
+    severity_status: "measured"
+    severity_points: 0
+    severity_by_parser:
+      open-resume: 0
+      pyresparser: 0
+    parsers_agreed: []
+    confidence: "no-measured-drop"
+    evidence_fixture: "10-icon-contact"
+    fields_lost: "none"
+    assertion: "contact lines contain no symbol-block glyphs (U+2190-U+2BFF)."
+
+  - id: "structure.no_embedded_images"
+    statement: "Logos, headshots or text baked into images inside an otherwise text-layer resume."
+    layer: "untested"
+    severity_status: "placeholder-untested"
+    severity_points: null
+    severity_note: "No fixture built for this dimension yet, so no severity has been measured."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "page has no XObject image covering more than 5% of the page area."
+    hypothesis_source: "ats-screener format-scorer (MIT)"
+
+  - id: "structure.no_all_caps_blocks"
+    statement: "Whole lines of body text in capitals."
+    layer: "untested"
+    severity_status: "placeholder-untested"
+    severity_points: null
+    severity_note: "No fixture built for this dimension yet, so no severity has been measured."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "no non-heading line is entirely uppercase."
+    hypothesis_source: "ats-screener format-scorer (MIT)"
+
+  - id: "structure.special_character_density"
+    statement: "A high density of unusual characters, often a sign of a broken export."
+    layer: "untested"
+    severity_status: "placeholder-untested"
+    severity_points: null
+    severity_note: "No fixture built for this dimension yet, so no severity has been measured."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "non-alphanumeric, non-punctuation characters stay under a threshold share of the text."
+    hypothesis_source: "ats-screener format-scorer (MIT)"
+
+  - id: "content.quantified_bullets"
+    statement: "Bullets state a measurable outcome rather than a duty."
+    layer: "llm"
+    severity_status: "not-bench-measurable"
+    severity_points: null
+    severity_note: "Content judgement: a parser bench cannot measure it. Never assign this a bench-derived weight."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "model returns a boolean per bullet; TypeScript aggregates. No bench severity exists for this."
+
+  - id: "content.strong_action_verbs"
+    statement: "Bullets open with a specific action verb, not a passive or filler phrase."
+    layer: "llm"
+    severity_status: "not-bench-measurable"
+    severity_points: null
+    severity_note: "Content judgement: a parser bench cannot measure it. Never assign this a bench-derived weight."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "model returns a boolean per bullet."
+
+  - id: "content.no_buzzword_padding"
+    statement: "The summary and skills avoid unsupported superlatives and filler."
+    layer: "llm"
+    severity_status: "not-bench-measurable"
+    severity_points: null
+    severity_note: "Content judgement: a parser bench cannot measure it. Never assign this a bench-derived weight."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "model returns flagged phrases with offsets."
+
+  - id: "content.tense_consistency"
+    statement: "Past roles use past tense; the current role uses present tense."
+    layer: "llm"
+    severity_status: "not-bench-measurable"
+    severity_points: null
+    severity_note: "Content judgement: a parser bench cannot measure it. Never assign this a bench-derived weight."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "model returns a boolean per role."
+
+  - id: "content.keyword_gap_vs_jd"
+    statement: "Skills named in a target job description that the resume never mentions."
+    layer: "llm"
+    severity_status: "not-bench-measurable"
+    severity_points: null
+    severity_note: "Content judgement: a parser bench cannot measure it. Never assign this a bench-derived weight."
+    parsers_agreed: []
+    confidence: "unmeasured"
+    assertion: "token-boundary match of JD skills against resume text; the model only proposes where to add them."

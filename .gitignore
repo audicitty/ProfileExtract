@@ -42,3 +42,8 @@ next-env.d.ts
 
 # claude code worktrees (nested checkouts of this repo)
 /.claude/worktrees/
+
+# parser bench (dev tool): local python env and generated fixture PDFs.
+# bench/results/ and checks/ are committed - they are the measurement evidence.
+/bench/.venv/
+/bench/out/
