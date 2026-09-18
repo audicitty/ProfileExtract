@@ -51,3 +51,9 @@ next-env.d.ts
 # regression check set (evals/): scratch output of a run.
 # evals/fixtures/ and evals/baseline/ are committed - they are the check set itself.
 /evals/out/
+
+# local scratch: real resumes and reference files kept beside the project.
+# This repo is public and these carry personal contact details.
+/example resumes/
+/*.skill
+/*.local.mjs
