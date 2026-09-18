@@ -1,0 +1,453 @@
+{
+  "generated_at": "2026-09-18T05:30:17.940Z",
+  "git_commit": "66bd4dc",
+  "mode": "full",
+  "filter": [],
+  "pipeline": {
+    "parsed_by": "parseResume() from src/lib/resume.ts",
+    "model_candidates": [
+      "gemini-2.5-flash",
+      "gemini-2.5-pro",
+      "gemini-flash-latest"
+    ],
+    "note": "resume.ts walks that candidate list and returns the first model that answers; it does not report which one did. Temperature is 0.1, not 0, so small run-to-run variation is expected and is not by itself a regression.",
+    "structural_grader": "auditResumeStructure() from src/lib/resume-ats.ts",
+    "registry_bench_run_at": "2026-09-17T14:26:18.164Z"
+  },
+  "summary": {
+    "fixtures": 5,
+    "examples": 5,
+    "real": 0,
+    "valid_json": {
+      "ok": 5,
+      "of": 5,
+      "rate": 1
+    },
+    "skills": {
+      "graded": 5,
+      "macro_precision": 0.821,
+      "macro_recall": 0.964,
+      "macro_f1": 0.884,
+      "micro_precision": 0.828,
+      "micro_recall": 0.96
+    },
+    "seniority": {
+      "labelled": 5,
+      "matched": 4,
+      "exact_match_rate": 0.8
+    },
+    "years_of_experience": {
+      "labelled": 5,
+      "mean_abs_error": 0.86,
+      "median_abs_error": 0.3,
+      "max_abs_error": 2,
+      "within_1_year_rate": 0.6
+    },
+    "contact": {
+      "candidate_name": {
+        "labelled": 5,
+        "matched": 5,
+        "rate": 1
+      },
+      "email": {
+        "labelled": 5,
+        "matched": 5,
+        "rate": 1
+      },
+      "phone": {
+        "labelled": 5,
+        "matched": 5,
+        "rate": 1
+      },
+      "location": {
+        "labelled": 5,
+        "matched": 5,
+        "rate": 1
+      }
+    },
+    "structure": {
+      "labelled": 3,
+      "matched": 3,
+      "drifted": 0,
+      "no_audit": 0
+    }
+  },
+  "fixtures": [
+    {
+      "id": "example-01-fresher-frontend",
+      "example": true,
+      "shape": "Fresher / first job. 2025 B.Tech grad, one frontend role, tier-2 city, skills in labelled sub-lists.",
+      "input": "pdf",
+      "parse_ok": true,
+      "audit": {
+        "ats_score": 81.8,
+        "status": "scored",
+        "sub_scores": {
+          "structure": 100,
+          "contact": 81.8,
+          "layout": 100,
+          "dates": 100
+        },
+        "failed_check_ids": [
+          "contact.in_body_not_page_margin",
+          "dates.consistent_format",
+          "dates.numeric_month_format"
+        ]
+      },
+      "structure": {
+        "status": "match",
+        "expected_score": 81.8,
+        "actual_score": 81.8,
+        "score_drift": 0,
+        "newly_failing": [],
+        "no_longer_failing": []
+      },
+      "skills": {
+        "expected_count": 15,
+        "actual_count": 19,
+        "matched_count": 15,
+        "precision": 0.789,
+        "recall": 1,
+        "f1": 0.882,
+        "missing": [],
+        "extra": [
+          "component testing",
+          "performance optimization",
+          "product development",
+          "ui/ux development"
+        ]
+      },
+      "seniority": {
+        "status": "match",
+        "expected": "Entry-level",
+        "actual": "Entry-level"
+      },
+      "years": {
+        "expected": 1.2,
+        "actual": 1,
+        "abs_error": 0.2
+      },
+      "contact": {
+        "candidate_name": {
+          "status": "match",
+          "expected": "Riya Sharma",
+          "actual": "Riya Sharma"
+        },
+        "email": {
+          "status": "match",
+          "expected": "riya.sharma.dev@example.com",
+          "actual": "riya.sharma.dev@example.com"
+        },
+        "phone": {
+          "status": "match",
+          "expected": "+91 98290 44317",
+          "actual": "+91 98290 44317"
+        },
+        "location": {
+          "status": "match",
+          "expected": [
+            "Jaipur, Rajasthan",
+            "Jaipur",
+            "Jaipur, Rajasthan, India",
+            "Jaipur, India"
+          ],
+          "actual": "Jaipur, Rajasthan"
+        }
+      }
+    },
+    {
+      "id": "example-02-mid-backend-java",
+      "example": true,
+      "shape": "Mid-level Java backend at an IT services firm. Inflated internal job title (\"Senior Systems Engineer\") against four years of experience.",
+      "input": "pdf",
+      "parse_ok": true,
+      "audit": {
+        "ats_score": 100,
+        "status": "scored",
+        "sub_scores": {
+          "structure": 100,
+          "contact": 100,
+          "layout": 100,
+          "dates": 100
+        },
+        "failed_check_ids": [
+          "dates.consistent_format",
+          "dates.numeric_month_format"
+        ]
+      },
+      "structure": {
+        "status": "match",
+        "expected_score": 100,
+        "actual_score": 100,
+        "score_drift": 0,
+        "newly_failing": [],
+        "no_longer_failing": []
+      },
+      "skills": {
+        "expected_count": 23,
+        "actual_count": 27,
+        "matched_count": 23,
+        "precision": 0.852,
+        "recall": 1,
+        "f1": 0.92,
+        "missing": [],
+        "extra": [
+          "mentoring",
+          "performance tuning",
+          "query optimization",
+          "transaction reconciliation"
+        ]
+      },
+      "seniority": {
+        "status": "miss",
+        "expected": "Mid-level",
+        "actual": "Senior"
+      },
+      "years": {
+        "expected": 4.3,
+        "actual": 4,
+        "abs_error": 0.3
+      },
+      "contact": {
+        "candidate_name": {
+          "status": "match",
+          "expected": "Arjun Deshpande",
+          "actual": "Arjun Deshpande"
+        },
+        "email": {
+          "status": "match",
+          "expected": "arjun.deshpande@example.com",
+          "actual": "arjun.deshpande@example.com"
+        },
+        "phone": {
+          "status": "match",
+          "expected": "+91 80456 12290",
+          "actual": "+91 80456 12290"
+        },
+        "location": {
+          "status": "match",
+          "expected": [
+            "Bengaluru, Karnataka",
+            "Bengaluru",
+            "Bangalore",
+            "Bengaluru, Karnataka, India",
+            "Bengaluru, India"
+          ],
+          "actual": "Bengaluru, Karnataka"
+        }
+      }
+    },
+    {
+      "id": "example-03-mid-fullstack-mern",
+      "example": true,
+      "shape": "Mid-level MERN full stack at a startup. Pasted as plain text, so the structural layer is skipped by design.",
+      "input": "text",
+      "parse_ok": true,
+      "structure": {
+        "status": "not_labelled"
+      },
+      "skills": {
+        "expected_count": 22,
+        "actual_count": 21,
+        "matched_count": 18,
+        "precision": 0.857,
+        "recall": 0.818,
+        "f1": 0.837,
+        "missing": [
+          "aws",
+          "ec2",
+          "lambda",
+          "s3"
+        ],
+        "extra": [
+          "aws ec2",
+          "aws lambda",
+          "aws s3"
+        ]
+      },
+      "seniority": {
+        "status": "match",
+        "expected": "Mid-level",
+        "actual": "Mid-level"
+      },
+      "years": {
+        "expected": 3.7,
+        "actual": 1.9,
+        "abs_error": 1.8
+      },
+      "contact": {
+        "candidate_name": {
+          "status": "match",
+          "expected": "Sneha Iyer",
+          "actual": "Sneha Iyer"
+        },
+        "email": {
+          "status": "match",
+          "expected": "sneha.iyer.dev@example.com",
+          "actual": "sneha.iyer.dev@example.com"
+        },
+        "phone": {
+          "status": "match",
+          "expected": "+91 99711 08245",
+          "actual": "+91 99711 08245"
+        },
+        "location": {
+          "status": "match",
+          "expected": [
+            "Noida, Uttar Pradesh",
+            "Noida",
+            "Noida, Uttar Pradesh, India",
+            "Noida, India",
+            "Delhi NCR"
+          ],
+          "actual": "Noida, Uttar Pradesh"
+        }
+      }
+    },
+    {
+      "id": "example-04-support-to-data-analyst",
+      "example": true,
+      "shape": "Career switch inside one company: production support to data analyst. Non-engineering degree, two roles, same employer.",
+      "input": "pdf",
+      "parse_ok": true,
+      "audit": {
+        "ats_score": 81.8,
+        "status": "scored",
+        "sub_scores": {
+          "structure": 100,
+          "contact": 81.8,
+          "layout": 100,
+          "dates": 100
+        },
+        "failed_check_ids": [
+          "contact.in_body_not_page_margin",
+          "dates.consistent_format",
+          "dates.numeric_month_format"
+        ]
+      },
+      "structure": {
+        "status": "match",
+        "expected_score": 81.8,
+        "actual_score": 81.8,
+        "score_drift": 0,
+        "newly_failing": [],
+        "no_longer_failing": []
+      },
+      "skills": {
+        "expected_count": 13,
+        "actual_count": 17,
+        "matched_count": 13,
+        "precision": 0.765,
+        "recall": 1,
+        "f1": 0.867,
+        "missing": [],
+        "extra": [
+          "data modeling",
+          "production support",
+          "sla compliance",
+          "supply chain reporting"
+        ]
+      },
+      "seniority": {
+        "status": "match",
+        "expected": "Mid-level",
+        "actual": "Mid-level"
+      },
+      "years": {
+        "expected": 4,
+        "actual": 4,
+        "abs_error": 0
+      },
+      "contact": {
+        "candidate_name": {
+          "status": "match",
+          "expected": "Mohammed Faizan",
+          "actual": "Mohammed Faizan"
+        },
+        "email": {
+          "status": "match",
+          "expected": "m.faizan.analytics@example.com",
+          "actual": "m.faizan.analytics@example.com"
+        },
+        "phone": {
+          "status": "match",
+          "expected": "+91 70329 55184",
+          "actual": "+91 70329 55184"
+        },
+        "location": {
+          "status": "match",
+          "expected": [
+            "Hyderabad, Telangana",
+            "Hyderabad",
+            "Hyderabad, Telangana, India",
+            "Hyderabad, India"
+          ],
+          "actual": "Hyderabad, Telangana"
+        }
+      }
+    },
+    {
+      "id": "example-05-senior-devops",
+      "example": true,
+      "shape": "Senior DevOps, nearly six years across two product companies. Long tool inventory in labelled sub-lists; pasted as plain text.",
+      "input": "text",
+      "parse_ok": true,
+      "structure": {
+        "status": "not_labelled"
+      },
+      "skills": {
+        "expected_count": 27,
+        "actual_count": 32,
+        "matched_count": 27,
+        "precision": 0.844,
+        "recall": 1,
+        "f1": 0.915,
+        "missing": [],
+        "extra": [
+          "backup and restore",
+          "container scanning",
+          "rightsizing",
+          "s3 lifecycle rules",
+          "spot node groups"
+        ]
+      },
+      "seniority": {
+        "status": "match",
+        "expected": "Senior",
+        "actual": "Senior"
+      },
+      "years": {
+        "expected": 5.7,
+        "actual": 3.7,
+        "abs_error": 2
+      },
+      "contact": {
+        "candidate_name": {
+          "status": "match",
+          "expected": "Karthik Reddy",
+          "actual": "Karthik Reddy"
+        },
+        "email": {
+          "status": "match",
+          "expected": "karthik.reddy.ops@example.com",
+          "actual": "karthik.reddy.ops@example.com"
+        },
+        "phone": {
+          "status": "match",
+          "expected": "+91 90281 77436",
+          "actual": "+91 90281 77436"
+        },
+        "location": {
+          "status": "match",
+          "expected": [
+            "Pune, Maharashtra",
+            "Pune",
+            "Pune, Maharashtra, India",
+            "Pune, India"
+          ],
+          "actual": "Pune, Maharashtra"
+        }
+      }
+    }
+  ]
+}

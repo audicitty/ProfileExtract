@@ -1,0 +1,41 @@
+{
+  "id": "example-04-support-to-data-analyst",
+  "example": true,
+  "shape": "Career switch inside one company: production support to data analyst. Non-engineering degree, two roles, same employer.",
+  "provenance": "EXAMPLE — invented for this repo to pin the fixture format and prove the runner works end to end. Not a real user's resume. Do not count it as coverage.",
+  "input": "pdf",
+  "render_pdf": true,
+  "labels": {
+    "candidate_name": "Mohammed Faizan",
+    "email": "m.faizan.analytics@example.com",
+    "phone": "+91 70329 55184",
+    "location": ["Hyderabad, Telangana", "Hyderabad", "Hyderabad, Telangana, India", "Hyderabad, India"],
+    "years_of_experience": 4.0,
+    "seniority_level": "Mid-level",
+    "skills": [
+      "SQL",
+      "Python",
+      "Pandas",
+      "NumPy",
+      "Power BI",
+      "DAX",
+      "Excel",
+      "Microsoft SQL Server",
+      "Snowflake",
+      "Tableau",
+      "Git",
+      "JIRA",
+      "ServiceNow"
+    ]
+  },
+  "labels_note": "years_of_experience is total professional experience, Sep 2022 to Present, read as of 2026-09 — not the 2.5 years spent in analytics. This fixture exists because that distinction is exactly where a parser guesses.",
+  "structure": {
+    "ats_score": 81.8,
+    "failed_check_ids": [
+      "contact.in_body_not_page_margin",
+      "dates.consistent_format",
+      "dates.numeric_month_format"
+    ],
+    "pinned_note": "Pinned from a run of auditResumeStructure() on this exact PDF, not judged by hand: that function is pure TypeScript, so the same file must give the same score forever. Any drift here is a change in resume-ats.ts, pdf-structure.ts or checks/registry.json."
+  }
+}

@@ -1,0 +1,32 @@
+Sneha Iyer
+Noida, Uttar Pradesh
+sneha.iyer.dev@example.com
++91 99711 08245
+
+SUMMARY
+Full stack developer with three and a half years building MERN applications at an early
+stage SaaS company. Shipped the customer dashboard, the billing integration and the
+notification service.
+
+SKILLS
+JavaScript, TypeScript, React, Redux, Node.js, Express, MongoDB, Mongoose, PostgreSQL,
+REST APIs, GraphQL, Docker, AWS (EC2, S3, Lambda), Git, GitHub Actions, Jest, Cypress,
+Razorpay API, Socket.IO
+
+EXPERIENCE
+Software Development Engineer, Trellium Labs, Noida
+Jan 2023 - Present
+- Built the customer dashboard in React and TypeScript, now used daily by 2,800 users
+  across 140 accounts.
+- Designed the Node.js and Express notification service on Socket.IO, delivering 1.1
+  million in-app messages a month with a 99.4 percent delivery rate.
+- Integrated Razorpay for subscription billing, replacing a manual invoicing process that
+  cost the finance team twelve hours a week.
+- Migrated reporting queries from MongoDB aggregations to PostgreSQL, taking the monthly
+  report from ninety seconds to four.
+- Set up GitHub Actions CI with Jest and Cypress suites, cutting failed deploys from four
+  a month to zero over two quarters.
+
+EDUCATION
+B.Tech in Computer Science and Engineering, Amity University, Noida
+2019 - 2023, 8.6 CGPA

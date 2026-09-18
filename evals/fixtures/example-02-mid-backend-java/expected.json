@@ -1,0 +1,50 @@
+{
+  "id": "example-02-mid-backend-java",
+  "example": true,
+  "shape": "Mid-level Java backend at an IT services firm. Inflated internal job title (\"Senior Systems Engineer\") against four years of experience.",
+  "provenance": "EXAMPLE — invented for this repo to pin the fixture format and prove the runner works end to end. Not a real user's resume. Do not count it as coverage.",
+  "input": "pdf",
+  "render_pdf": true,
+  "labels": {
+    "candidate_name": "Arjun Deshpande",
+    "email": "arjun.deshpande@example.com",
+    "phone": "+91 80456 12290",
+    "location": ["Bengaluru, Karnataka", "Bengaluru", "Bangalore", "Bengaluru, Karnataka, India", "Bengaluru, India"],
+    "years_of_experience": 4.3,
+    "seniority_level": "Mid-level",
+    "skills": [
+      "Java",
+      "SQL",
+      "Python",
+      "Spring Boot",
+      "Spring Data JPA",
+      "Hibernate",
+      "JUnit",
+      "Mockito",
+      "Oracle",
+      "PostgreSQL",
+      "Redis",
+      "Apache Kafka",
+      "Docker",
+      "Kubernetes",
+      "Jenkins",
+      "Maven",
+      "Git",
+      "AWS",
+      "Microservices",
+      "REST APIs",
+      "Agile",
+      "Scrum",
+      "Test Driven Development"
+    ]
+  },
+  "labels_note": "years_of_experience is one role, Jun 2022 to Present, read as of 2026-09. The title says Senior; four years at an IT services firm is Mid-level, and this fixture exists to check the model reads experience rather than the job title.",
+  "structure": {
+    "ats_score": 100,
+    "failed_check_ids": [
+      "dates.consistent_format",
+      "dates.numeric_month_format"
+    ],
+    "pinned_note": "Pinned from a run of auditResumeStructure() on this exact PDF, not judged by hand: that function is pure TypeScript, so the same file must give the same score forever. Any drift here is a change in resume-ats.ts, pdf-structure.ts or checks/registry.json."
+  }
+}

@@ -1,0 +1,35 @@
+Arjun Deshpande
+Bengaluru, Karnataka
++91 80456 12290 | arjun.deshpande@example.com | linkedin.com/in/arjundeshpande
+
+PROFESSIONAL SUMMARY
+Backend engineer with four years on Java and Spring Boot services in a large IT services
+organisation, delivering for a US retail banking client. Owns two microservices end to
+end, from design through on-call.
+
+TECHNICAL SKILLS
+Languages: Java, SQL, Python
+Frameworks: Spring Boot, Spring Data JPA, Hibernate, JUnit, Mockito
+Data: Oracle, PostgreSQL, Redis, Apache Kafka
+Platform: Docker, Kubernetes, Jenkins, Maven, Git, AWS
+Practices: Microservices, REST APIs, Agile, Scrum, Test Driven Development
+
+WORK EXPERIENCE
+Senior Systems Engineer, Vireo Consulting Services, Bengaluru
+Jun 2022 - Present
+- Split a payments monolith into six Spring Boot microservices, cutting deployment time
+  for the team from two hours to eleven minutes.
+- Built an idempotent transaction reconciliation service handling 900,000 records nightly
+  with Kafka and PostgreSQL.
+- Reduced Oracle query time on the statement API from 3.4s to 260ms by rewriting three
+  joins and adding two composite indexes.
+- Raised JUnit and Mockito coverage on the core module from 41 percent to 78 percent.
+- Mentored two graduate engineers through their first production releases.
+
+EDUCATION
+B.E. in Computer Science, Visvesvaraya Technological University
+2018 - 2022, 8.2 CGPA
+
+CERTIFICATIONS
+AWS Certified Developer - Associate, 2024
+Oracle Certified Professional, Java SE 11 Developer, 2023

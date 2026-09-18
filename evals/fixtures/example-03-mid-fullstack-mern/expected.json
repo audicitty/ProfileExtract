@@ -1,0 +1,40 @@
+{
+  "id": "example-03-mid-fullstack-mern",
+  "example": true,
+  "shape": "Mid-level MERN full stack at a startup. Pasted as plain text, so the structural layer is skipped by design.",
+  "provenance": "EXAMPLE — invented for this repo to pin the fixture format and prove the runner works end to end. Not a real user's resume. Do not count it as coverage.",
+  "input": "text",
+  "labels": {
+    "candidate_name": "Sneha Iyer",
+    "email": "sneha.iyer.dev@example.com",
+    "phone": "+91 99711 08245",
+    "location": ["Noida, Uttar Pradesh", "Noida", "Noida, Uttar Pradesh, India", "Noida, India", "Delhi NCR"],
+    "years_of_experience": 3.7,
+    "seniority_level": "Mid-level",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "React",
+      "Redux",
+      "Node.js",
+      "Express",
+      "MongoDB",
+      "Mongoose",
+      "PostgreSQL",
+      "REST APIs",
+      "GraphQL",
+      "Docker",
+      "AWS",
+      "EC2",
+      "S3",
+      "Lambda",
+      "Git",
+      "GitHub Actions",
+      "Jest",
+      "Cypress",
+      "Razorpay API",
+      "Socket.IO"
+    ]
+  },
+  "labels_note": "years_of_experience is one role, Jan 2023 to Present, read as of 2026-09. The AWS sub-services are labelled separately because the resume names them: see the granularity rule in evals/README.md."
+}

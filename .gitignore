@@ -47,3 +47,7 @@ next-env.d.ts
 # bench/results/ and checks/ are committed - they are the measurement evidence.
 /bench/.venv/
 /bench/out/
+
+# regression check set (evals/): scratch output of a run.
+# evals/fixtures/ and evals/baseline/ are committed - they are the check set itself.
+/evals/out/

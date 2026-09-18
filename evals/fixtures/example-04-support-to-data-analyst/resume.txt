@@ -1,0 +1,35 @@
+Mohammed Faizan
+Hyderabad, Telangana | +91 70329 55184 | m.faizan.analytics@example.com
+
+SUMMARY
+Data analyst with four years in one organisation, the first eighteen months in production
+support and the last two and a half in analytics. Works in SQL, Python and Power BI on
+supply chain reporting.
+
+TECHNICAL SKILLS
+SQL, Python, Pandas, NumPy, Power BI, DAX, Excel, Microsoft SQL Server, Snowflake,
+Tableau, Git, JIRA, ServiceNow
+
+EXPERIENCE
+Data Analyst, Northline Logistics India, Hyderabad
+Mar 2024 - Present
+- Rebuilt the weekly fill rate report in Power BI and DAX, replacing four Excel workbooks
+  and saving the planning team six hours a week.
+- Wrote 40 SQL models on Snowflake for the shipment fact table, cutting the dashboard
+  refresh from 22 minutes to 3.
+- Automated an SLA breach alert in Python and Pandas that flagged 1,300 at-risk shipments
+  in its first quarter.
+
+Production Support Engineer, Northline Logistics India, Hyderabad
+Sep 2022 - Feb 2024
+- Resolved 2,100 tickets in ServiceNow across warehouse and transport systems, holding a
+  94 percent SLA compliance rate.
+- Wrote 18 SQL runbook queries that the L1 team used to close 30 percent of tickets
+  without escalation.
+
+EDUCATION
+B.Com (Computers), Osmania University
+2019 - 2022
+
+CERTIFICATIONS
+Microsoft Certified: Power BI Data Analyst Associate, 2024

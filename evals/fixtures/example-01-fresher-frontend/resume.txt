@@ -1,0 +1,32 @@
+Riya Sharma
+Jaipur, Rajasthan | +91 98290 44317 | riya.sharma.dev@example.com | github.com/riyasharma-dev
+
+SUMMARY
+Frontend developer with a year of experience building React interfaces at a product
+startup. Comfortable with TypeScript, REST API integration and component testing.
+
+TECHNICAL SKILLS
+Languages: JavaScript, TypeScript, HTML, CSS
+Frameworks: React, Next.js, Tailwind CSS, Redux Toolkit
+Tools: Git, Vite, Jest, React Testing Library, Figma
+Other: REST APIs, Firebase
+
+EXPERIENCE
+Frontend Developer, Kalpa Technologies, Jaipur
+Jul 2025 - Present
+- Built 14 reusable React components now used across three product surfaces, cutting the
+  time to ship a new page from three days to one.
+- Replaced a jQuery admin panel with a Next.js rewrite, reducing first contentful paint
+  from 4.1s to 1.3s on a mid-range Android device.
+- Added Jest and React Testing Library coverage to the checkout flow, catching seven
+  regressions before release.
+- Integrated nine REST endpoints with loading and error states, using Redux Toolkit for
+  shared cart state.
+
+PROJECTS
+Bus Pass Portal
+- Student bus pass application in React and Firebase, used by 400 students on campus.
+
+EDUCATION
+B.Tech in Information Technology, Rajasthan Technical University
+2021 - 2025, 7.9 CGPA

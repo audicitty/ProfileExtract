@@ -1,0 +1,41 @@
+Karthik Reddy
+Pune, Maharashtra
+karthik.reddy.ops@example.com | +91 90281 77436 | linkedin.com/in/karthikreddyops
+
+SUMMARY
+DevOps engineer with close to six years running AWS infrastructure for two product
+companies. Owns the Terraform estate, the Kubernetes platform and the release pipeline
+for eleven services.
+
+TECHNICAL SKILLS
+Cloud: AWS (EC2, EKS, RDS, S3, Lambda, CloudFront, IAM)
+Infrastructure: Terraform, Kubernetes, Helm, Docker, Ansible
+CI/CD: GitLab CI, Jenkins, ArgoCD
+Observability: Prometheus, Grafana, Loki, PagerDuty
+Languages: Python, Bash, Go
+Other: Linux, Nginx, PostgreSQL, Redis
+
+EXPERIENCE
+Senior DevOps Engineer, Orbiq Health, Pune
+Apr 2023 - Present
+- Moved 11 services from EC2 to EKS with Helm charts and ArgoCD, taking the median deploy
+  from 38 minutes to 6.
+- Wrote the Terraform modules that now describe the whole production estate, replacing a
+  console-managed setup that had no review trail.
+- Cut the monthly AWS bill by 31 percent through rightsizing, spot node groups and S3
+  lifecycle rules.
+- Built Prometheus and Grafana dashboards plus PagerDuty routing, reducing mean time to
+  acknowledge from 22 minutes to 4.
+
+DevOps Engineer, Sanchay Fintech, Pune
+Jan 2021 - Mar 2023
+- Built the GitLab CI pipeline for 7 repositories, adding container scanning and blocking
+  9 vulnerable releases in the first year.
+- Automated Linux host provisioning with Ansible for 60 servers, removing two days of
+  manual setup per environment.
+- Ran the PostgreSQL backup and restore drill quarterly, cutting verified restore time
+  from 4 hours to 35 minutes.
+
+EDUCATION
+B.E. in Electronics and Telecommunication, Savitribai Phule Pune University
+2016 - 2020

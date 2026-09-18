@@ -124,7 +124,8 @@ profex/
 │   ├── jobs.test.mjs                     # Job search URL, token matching, scoring, description cache & CSV tests
 │   ├── resume-ats.test.mjs               # Structural checks, score assembly & PDF extraction tests
 │   ├── resume-enhance.test.mjs           # Prompt budget guard, keyword gaps, sections & ATS-safe text
-│   └── checks-registry.test.mjs          # Registry is generated, not hand-written (severity drift guard)
+│   ├── checks-registry.test.mjs          # Registry is generated, not hand-written (severity drift guard)
+│   └── evals-graders.test.mjs            # Regression-set graders & fixture labels (free, deterministic)
 ├── bench/                                # DEV TOOL ONLY — parser bench (see §8). Not in src/, not bundled.
 │   ├── content.json                      # One resume's content, held constant across fixtures
 │   ├── fixtures.mjs                      # 13 fixtures, each varying exactly one dimension
@@ -139,6 +140,14 @@ profex/
 ├── checks/
 │   ├── checks.mjs                        # Check statements, layers, assertions (no severities)
 │   └── registry.yaml / registry.json     # Generated registry with bench-measured severities
+├── evals/                                # Regression check set (see §9). Run by hand, not in npm test.
+│   ├── README.md                         # The two rules, labelling conventions, fixture checklist
+│   ├── run.mjs                           # `npm run check` — pipeline -> graders -> baseline
+│   ├── graders.mjs                       # Deterministic graders only (no LLM judge)
+│   ├── fixtures.mjs                      # Fixture discovery & label validation
+│   ├── build-example-pdfs.mjs            # Renders the example resume.txt files to PDF (Chrome)
+│   ├── fixtures/example-*/               # 5 EXAMPLE fixtures (invented, not coverage)
+│   └── baseline/baseline.{json,md}       # Committed baseline; `git diff` it after a prompt change
 ├── .env.local                            # Local environment variables
 ├── drizzle.config.ts                     # Drizzle ORM config
 ├── package.json                          # Dependencies and scripts
@@ -198,7 +207,12 @@ npm run db:push
 # 5. Run linter
 npm run lint
 
-# 6. Parser bench (development tool — see §8)
+# 6. Regression check set (paid, manual — see §9). Deliberately NOT part of npm test.
+npm run check                      # all fixtures: pipeline + graders, rewrites the baseline
+npm run check -- --structure-only  # free: resume-ats.ts structural grader only
+npm run check -- 03 --no-write     # one fixture, leave the committed baseline alone
+
+# 7. Parser bench (development tool — see §8)
 npm run bench:setup      # once: creates bench/.venv, installs oracle B + PyMuPDF
 npm run bench:fixtures   # render the 13 fixture PDFs
 npm run bench            # fixture x parser matrix -> bench/results/
@@ -248,3 +262,35 @@ Rules that hold from here on:
 5. **The bench stays out of the product.** `bench/` is excluded from `tsconfig.json` and
    ESLint, is never imported from `src/`, and never runs in a request. Its Python venv
    (`bench/.venv/`) and generated PDFs (`bench/out/`) are gitignored.
+
+---
+
+## 9. Regression Check Set (`evals/`)
+
+A safety net for prompt changes, not an eval harness (idea.md §6). `npm run check` feeds
+~15–20 resume fixtures through the real pipeline, grades the result with deterministic
+graders, and rewrites the committed baseline in `evals/baseline/`. The workflow is: change
+a prompt, run it, read `git diff evals/baseline/`.
+
+Rules that hold from here on:
+
+1. **Never train on the fixtures, and never edit a label to match model output.** These two
+   rules are the whole value of the set; `evals/README.md` states them first for that
+   reason. Loosening a grader or adding a `SKILL_ALIASES` entry so a wrong answer counts as
+   right is rule 2 with extra steps.
+2. **`npm run check` stays out of `npm test`.** It is slow and it costs money on every run,
+   and it must never gate an ordinary commit. The graders themselves are pure and free, so
+   `test/evals-graders.test.mjs` does belong in `npm test`.
+3. **Deterministic graders only — no LLM judge.** `ParsedResume` is structured enough that
+   set precision/recall, exact match and absolute error cover what matters. `summary`,
+   `target_roles` and `suggested_search_keywords` are free text and are not graded at all.
+4. **The structural grader is `auditResumeStructure()` from `src/lib/resume-ats.ts`** —
+   built in Phase 3, reused here, not reimplemented. It has no model in it, so the
+   comparison against each fixture's pinned `structure` block is exact: drift means
+   `resume-ats.ts`, `pdf-structure.ts` or `checks/registry.json` changed.
+5. **The set observes the pipeline; it never changes it.** Nothing under `evals/` is
+   imported from `src/`, and no run writes to `src/`.
+6. **The five `example-*` fixtures are invented and are not coverage.** They exist so the
+   format is unambiguous and the runner is provable end to end. The runner counts "real"
+   and "example" separately and nags while the real count is under 15. The checklist of
+   fixtures still to supply is at the end of `evals/README.md`.

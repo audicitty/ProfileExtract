@@ -1,0 +1,43 @@
+{
+  "id": "example-01-fresher-frontend",
+  "example": true,
+  "shape": "Fresher / first job. 2025 B.Tech grad, one frontend role, tier-2 city, skills in labelled sub-lists.",
+  "provenance": "EXAMPLE — invented for this repo to pin the fixture format and prove the runner works end to end. Not a real user's resume. Do not count it as coverage.",
+  "input": "pdf",
+  "render_pdf": true,
+  "labels": {
+    "candidate_name": "Riya Sharma",
+    "email": "riya.sharma.dev@example.com",
+    "phone": "+91 98290 44317",
+    "location": ["Jaipur, Rajasthan", "Jaipur", "Jaipur, Rajasthan, India", "Jaipur, India"],
+    "years_of_experience": 1.2,
+    "seniority_level": "Entry-level",
+    "skills": [
+      "JavaScript",
+      "TypeScript",
+      "HTML",
+      "CSS",
+      "React",
+      "Next.js",
+      "Tailwind CSS",
+      "Redux Toolkit",
+      "Git",
+      "Vite",
+      "Jest",
+      "React Testing Library",
+      "Figma",
+      "REST APIs",
+      "Firebase"
+    ]
+  },
+  "labels_note": "years_of_experience is one role, Jul 2025 to Present, read as of 2026-09. jQuery is named in a bullet only as the thing being replaced, so by the labelling convention in evals/README.md it is not a skill here.",
+  "structure": {
+    "ats_score": 81.8,
+    "failed_check_ids": [
+      "contact.in_body_not_page_margin",
+      "dates.consistent_format",
+      "dates.numeric_month_format"
+    ],
+    "pinned_note": "Pinned from a run of auditResumeStructure() on this exact PDF, not judged by hand: that function is pure TypeScript, so the same file must give the same score forever. Any drift here is a change in resume-ats.ts, pdf-structure.ts or checks/registry.json."
+  }
+}
