@@ -6,7 +6,7 @@
 
 ## 1. Core Product Capabilities
 
-The platform focuses on 3 core workflows:
+The platform focuses on 4 core workflows:
 
 ### 1. LinkedIn URL Profile Extractor (`/url-extract`)
 - **Route**: `src/app/url-extract/page.tsx` | Component: `src/components/UrlExtractClient.tsx`
@@ -47,6 +47,19 @@ The platform focuses on 3 core workflows:
   4. **Output**: score with sub-scores, issues grouped by severity, copyable rewritten bullets and summary, and a plain-text ATS-safe re-flow of the resume. No `.docx`/`.pdf` generation (idea.md §1.6).
 - **Intake**: shares `src/components/ResumeIntake.tsx` with the Job Matcher — one copy of the paste/PDF-base64 logic.
 
+### 4. Career Chat (on `/jobs`)
+- **Component**: `src/components/CareerChat.tsx`, mounted by `JobMatcherClient` once a resume has been scanned.
+- **Backend**: `src/app/api/chat/route.ts`, `src/lib/chat-context.ts` (fencing & context), `src/lib/chat-tools.ts` (tool calling), `src/lib/chat-rate-limit.ts` (daily cap).
+- **Function**: the client posts the `ParsedResume` and `JobListing[]` it already holds in React state, plus the message history, and Gemini's reply streams back.
+  1. **Context, not retrieval** (idea.md §2.1): one resume plus ~25 postings is roughly 8–12k tokens against a 1M window, so the whole corpus goes in the prompt. **No vector database, no embeddings, no persisted chat history** — refreshing the page ends the conversation, and nothing is written to Postgres except a message count.
+  2. **Streaming**: `generateContentStream` into a `ReadableStream` of NDJSON events (`text`, `tool`, `jobs`, `enhancer`, `usage`, `error`, `done`). `runtime = "nodejs"` — Better Auth, the `pg` pool and the LinkedIn client all need Node; edge would buy nothing and cost the database.
+  3. **Rate limiting is required** (idea.md §2.3): a per-user daily cap in the `chat_usage` table, counted by one atomic upsert before the model call. Default 25 messages/day, `CHAT_DAILY_MESSAGE_CAP` overrides it, reset at UTC midnight. Over the cap returns `429` with `Retry-After`.
+  4. **Tool calling** (idea.md §2.2): `search_jobs` re-runs the live search and replaces the user's results, `score_job` re-scores one listing (optionally with hypothetical extra skills), `open_resume_enhancer` hands a posting to `/enhance` via the existing `sessionStorage` handoff. Each is a thin adapter over the function the HTTP routes already call — the chat and the page cannot disagree about a score.
+  5. **Cached-token logging**: every turn logs `[Chat] ... prompt=N cached=N (N%)` and the UI prints the same line under each reply, because implicit caching is the reason this feature skips RAG (idea.md §2.1).
+
+### Prompt injection is a first-class concern here
+Job descriptions are scraped from LinkedIn and are attacker-controllable text entering model context. `src/lib/chat-context.ts` is the single choke point: all scraped text is run through `sanitiseUntrusted` (control characters, zero-width and bidi overrides removed, bracket runs collapsed so a posting cannot forge a fence marker, hard length budget) and wrapped in `<<<BEGIN UNTRUSTED_JOB_DATA>>> … <<<END UNTRUSTED_JOB_DATA>>>`. The system instruction puts the data-not-instructions rule first. Tool results carrying scraped text go back through the same fence. `test/chat.test.mjs` asserts the fence survives a posting that tries to close it.
+
 ---
 
 ## 2. Technology Stack & Frameworks
@@ -77,6 +90,7 @@ profex/
 │   │   │   └── signup/page.tsx           # Signup page (Better Auth)
 │   │   ├── api/
 │   │   │   ├── auth/[...all]/route.ts    # Better Auth route handler
+│   │   │   ├── chat/route.ts             # Career chat: streaming, tools, rate limit
 │   │   │   ├── extract/route.ts          # AI Profile Text extractor route
 │   │   │   ├── extract-url/route.ts      # Bright Data profile URL scraper route
 │   │   │   ├── resume/scan/route.ts      # AI Resume scanner route (text & PDF)
@@ -98,9 +112,10 @@ profex/
 │   │   ├── JobMatcherClient.tsx          # Multi-city filter, job cards, apply links & "Optimize for this job"
 │   │   ├── ResumeIntake.tsx              # Shared paste / PDF-base64 intake (Job Matcher + Enhancer)
 │   │   ├── ResumeEnhancerClient.tsx      # Scores, issues by severity, copyable rewrites, ATS-safe text
+│   │   ├── CareerChat.tsx                # Streaming chat over the resume + matched jobs
 │   │   └── LoadingSkeleton.tsx           # Loading state skeletons
 │   ├── db/
-│   │   ├── schema.ts                     # Drizzle schema (users, sessions, accounts, verifications)
+│   │   ├── schema.ts                     # Drizzle schema (users, sessions, accounts, verifications, chat_usage)
 │   │   ├── index.ts                      # PostgreSQL pool connection
 │   │   └── init.ts                       # Database initial migration script
 │   └── lib/
@@ -113,6 +128,9 @@ profex/
 │       ├── resume-ats.ts                 # Bench-derived structural checks & TS score assembly
 │       ├── resume-enhance.ts             # LLM content layer, keyword gaps, ATS-safe text
 │       ├── resume-enhance-target.ts      # Job card -> /enhance handoff (sessionStorage)
+│       ├── chat-context.ts               # Fencing of scraped text, context & history assembly
+│       ├── chat-tools.ts                 # Chat tool declarations & dispatch into existing libs
+│       ├── chat-rate-limit.ts            # Per-user daily message cap (chat_usage upsert)
 │       ├── jobs.ts                       # Live LinkedIn jobs scraper, URL generator, AI fallback & match scoring
 │       ├── job-descriptions.ts           # Per-job posting fetch, TTL cache, HTML→text, skill parsing
 │       ├── csv.ts                        # Candidate profile RFC 4180 CSV export
@@ -124,6 +142,7 @@ profex/
 │   ├── jobs.test.mjs                     # Job search URL, token matching, scoring, description cache & CSV tests
 │   ├── resume-ats.test.mjs               # Structural checks, score assembly & PDF extraction tests
 │   ├── resume-enhance.test.mjs           # Prompt budget guard, keyword gaps, sections & ATS-safe text
+│   ├── chat.test.mjs                     # Injection fencing, context assembly, tools & cap helpers
 │   ├── checks-registry.test.mjs          # Registry is generated, not hand-written (severity drift guard)
 │   └── evals-graders.test.mjs            # Regression-set graders & fixture labels (free, deterministic)
 ├── bench/                                # DEV TOOL ONLY — parser bench (see §8). Not in src/, not bundled.
@@ -166,6 +185,7 @@ profex/
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Google Gemini API Key | `AIzaSy...` |
 | `BRIGHTDATA_API_KEY` | Bright Data API token for LinkedIn scraping | `f3fc32db-...` |
 | `BRIGHTDATA_DATASET_ID` | Bright Data Person Profile dataset ID | `gd_l1viktl72bvl7bjuj0` |
+| `CHAT_DAILY_MESSAGE_CAP` | Optional. Chat messages per user per UTC day (default 25) | `25` |
 
 ---
 
@@ -175,15 +195,18 @@ profex/
    - `headers()` in server components/route handlers is asynchronous: `await headers()`.
    - `searchParams` and `params` in pages are asynchronous `Promise` objects in Next.js 16.
 2. **Stateless Candidate Profile Privacy**:
-   - Extracted profiles and uploaded resumes are **never** persisted in the PostgreSQL database.
-   - Database only stores user authentication credentials and session tokens (`user`, `session`, `account`, `verification`).
+   - Extracted profiles, uploaded resumes and chat transcripts are **never** persisted in the PostgreSQL database.
+   - The database stores authentication credentials and session tokens (`user`, `session`, `account`, `verification`) plus one integer per user per day in `chat_usage`. No message text, no resume text.
 3. **LinkedIn Job Links**:
    - Never generate fake random numbers for job links (they collide with random expired jobs globally).
    - Always query LinkedIn's live public guest jobs endpoint (`https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search`) which provides genuine URNs (`/jobs/view/{id}`) and verified company profile links (`/company/{slug}`).
 4. **Indian IT Hubs Multi-Location Support**:
    - Supported cities: `Bangalore`, `Gurgaon`, `Delhi / NCR`, `Noida`, `Chennai`, `Jaipur`, `Indore`, `Hyderabad`, `Pune`, `Mumbai`, `Remote (India)`.
    - `filters.locations` accepts an array of strings, enabling users to search across multiple cities simultaneously.
-5. **CSV RFC 4180 Compliance**:
+5. **Scraped text never reaches a model unfenced**:
+   - Any LinkedIn-sourced text entering model context goes through `sanitiseUntrusted` + `fence` in `src/lib/chat-context.ts` and is labelled as data in the system instruction. That applies to tool results as well as the opening context block.
+   - The chat corpus block is built first and kept byte-identical across turns, because implicit context caching keys on the prefix.
+6. **CSV RFC 4180 Compliance**:
    - All cell values containing commas, quotes, or newlines are wrapped in quotes with internal quotes doubled (`""`).
    - UTF-8 Byte Order Mark (`\uFEFF`) is prepended so Excel and international spreadsheet viewers display text and currency symbols (₹, $, €) accurately.
 
@@ -201,7 +224,7 @@ npm test
 # 3. Run production build & type check
 npm run build
 
-# 4. Push database schema migrations
+# 4. Push database schema migrations (required once for the chat_usage table)
 npm run db:push
 
 # 5. Run linter

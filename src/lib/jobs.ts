@@ -20,6 +20,48 @@ export const ROLE_WEIGHT = 20;
  */
 export const UNKNOWN_SKILL_RATIO = 0.25;
 
+/** Where a search goes when the caller names no city. */
+export const DEFAULT_SEARCH_LOCATIONS = ["Bangalore", "Gurgaon", "Noida"];
+
+const WORKPLACE_TYPES = ["all", "remote", "hybrid", "onsite"] as const;
+const DATE_POSTED = ["all", "past_24h", "past_week", "past_month"] as const;
+const EXPERIENCE_LEVELS = ["all", "entry", "mid", "senior"] as const;
+
+/**
+ * Coerces whatever a caller sent into a valid `JobSearchFilters`.
+ *
+ * Shared by the `/api/jobs/search` route and the chat `search_jobs` tool so the model
+ * cannot reach a code path the HTTP client cannot, and neither can widen the filter
+ * vocabulary by accident.
+ */
+export function normaliseJobSearchFilters(
+  input: Partial<JobSearchFilters> | null | undefined
+): JobSearchFilters {
+  const rawLocations =
+    Array.isArray(input?.locations) && input.locations.length > 0
+      ? input.locations.map((l: unknown) => String(l).trim()).filter(Boolean)
+      : input?.location
+        ? String(input.location)
+            .split(",")
+            .map((l) => l.trim())
+            .filter(Boolean)
+        : [];
+
+  const locations = rawLocations.length > 0 ? rawLocations.slice(0, 8) : DEFAULT_SEARCH_LOCATIONS;
+
+  const pick = <T extends readonly string[]>(allowed: T, value: unknown): T[number] =>
+    allowed.includes(String(value)) ? (String(value) as T[number]) : allowed[0];
+
+  return {
+    keywords: String(input?.keywords || "").trim().slice(0, 120) || "Software Engineer",
+    location: locations.join(", "),
+    locations,
+    workplace_type: pick(WORKPLACE_TYPES, input?.workplace_type),
+    date_posted: pick(DATE_POSTED, input?.date_posted),
+    experience_level: pick(EXPERIENCE_LEVELS, input?.experience_level),
+  };
+}
+
 /**
  * Builds a search URL for LinkedIn Jobs based on specified filters.
  */

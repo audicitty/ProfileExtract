@@ -14,6 +14,7 @@ import {
 } from "@/components/ResumeIntake";
 import { useRouter } from "next/navigation";
 import { ENHANCE_TARGET_JOB_KEY } from "@/lib/resume-enhance-target";
+import { CareerChat } from "@/components/CareerChat";
 import {
   Briefcase,
   Sparkles,
@@ -830,6 +831,19 @@ export function JobMatcherClient() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Step 4: Ask about the results. Needs a resume — without one there is nothing
+          to reason against, and the chat would just be a worse search box. */}
+      {parsedResume && (
+        <CareerChat
+          resume={parsedResume}
+          jobs={jobs}
+          onJobsReplaced={(replacement) => {
+            setJobs(replacement);
+            setHasSearched(true);
+          }}
+        />
       )}
     </div>
   );

@@ -1,4 +1,12 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  date,
+  integer,
+  primaryKey,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -50,3 +58,25 @@ export const verification = pgTable("verification", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+/**
+ * Per-user daily chat message counter (idea.md §2.3).
+ *
+ * Chat is the first unbounded endpoint in the app; every other route is one-shot and
+ * self-limiting. The counter lives in Postgres rather than in memory because each
+ * serverless instance has its own memory, so an in-process Map would hand a user one
+ * cap per lambda. No resume or message text is stored here — only a count.
+ */
+export const chatUsage = pgTable(
+  "chat_usage",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** UTC calendar day, "YYYY-MM-DD". The cap resets at UTC midnight. */
+    usageDate: date("usage_date").notNull(),
+    messageCount: integer("message_count").notNull().default(0),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.usageDate] })]
+);

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { searchLinkedInJobs, scoreJobsWithResume } from "@/lib/jobs";
+import {
+  searchLinkedInJobs,
+  scoreJobsWithResume,
+  normaliseJobSearchFilters,
+} from "@/lib/jobs";
 import { JobSearchFilters, ParsedResume } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -33,24 +37,8 @@ export async function POST(req: NextRequest) {
 
     const { filters, resumeProfile } = body || {};
 
-    const rawLocations = Array.isArray(filters?.locations) && filters.locations.length > 0
-      ? filters.locations.map((l: unknown) => String(l).trim()).filter(Boolean)
-      : filters?.location ? [String(filters.location).trim()] : ["Bangalore", "Gurgaon", "Noida"];
-
-    const cleanFilters: JobSearchFilters = {
-      keywords: String(filters?.keywords || "").trim() || "Software Engineer",
-      location: rawLocations.join(", "),
-      locations: rawLocations,
-      workplace_type: ["all", "remote", "hybrid", "onsite"].includes(filters?.workplace_type)
-        ? filters.workplace_type
-        : "all",
-      date_posted: ["all", "past_24h", "past_week", "past_month"].includes(filters?.date_posted)
-        ? filters.date_posted
-        : "all",
-      experience_level: ["all", "entry", "mid", "senior"].includes(filters?.experience_level)
-        ? filters.experience_level
-        : "all",
-    };
+    // Shared with the chat `search_jobs` tool — one definition of a valid filter set.
+    const cleanFilters: JobSearchFilters = normaliseJobSearchFilters(filters);
 
     // 3. Search jobs using Bright Data dataset or AI discovery engine
     let jobs = await searchLinkedInJobs(cleanFilters, resumeProfile as ParsedResume | undefined);
